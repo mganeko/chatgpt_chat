@@ -16,6 +16,10 @@
 <script>
   const divChatHistory = document.getElementById('chat_history');
   const userText = document.getElementById('user_text');
+  const messages = [{
+      role: 'system',
+      content: 'あなたは親切なアシスタントです',
+    }];
 
   async function sendText() {
     const text = userText.value;
@@ -44,13 +48,16 @@
   }
 
   async function postText(text) {
-    const messages = [{
+    const message = {
       role: 'user',
       content: text,
-    }];
+    };
+    messages.push(message);
 
     const response = await chatCompletion(messages);
     console.log(response);
+    messages.push(response);
+    
     return response;
   }
 
