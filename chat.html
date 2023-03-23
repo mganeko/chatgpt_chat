@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+  <script src="js/config.js"></script>
+</head>
+<body>
+ <div>
+  <input type="text" id="user_text"></input>
+  <button id="send" onclick="sendText()">submit</button>
+ </div>
+ <div id="chat_history" style="border:sold black 1px">
+
+ </div>
+</body>
+<script>
+  const divChatHistory = document.getElementById('chat_history');
+  const userText = document.getElementById('user_text');
+
+  async function sendText() {
+    const text = userText.value;
+    addUserText(text);
+
+    const response = await postText(text);
+    addResponseText(response.content);
+
+    clearInput()
+  }
+
+  function clearInput() {
+    userText.value = '';
+  }
+
+  function addUserText(text) {
+    const div = document.createElement('div');
+    div.innerHTML = 'user:' + text;
+    divChatHistory.appendChild(div);
+  }
+
+  function addResponseText(text) {
+    const div = document.createElement('div');
+    div.innerHTML = 'AI:' + text;
+    divChatHistory.appendChild(div);
+  }
+
+  async function postText(text) {
+    const messages = [{
+      role: 'user',
+      content: text,
+    }];
+
+    const response = await chatCompletion(messages);
+    console.log(response);
+    return response;
+  }
+
+  async function chatCompletion(messages) {
+    const apiKey = API_KEY;
+    const body = JSON.stringify({
+      messages,
+      model: "gpt-3.5-turbo",
+    });
+
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body,
+    });
+    const data = await res.json();
+    console.log(data);
+  
+    const choice = 0;
+    return data.choices[choice].message;
+  };
+
+</script>
+</html>
