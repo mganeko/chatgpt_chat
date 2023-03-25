@@ -8,12 +8,12 @@
 </head>
 
 <body>
-  <div>
-    <input type="text" id="user_text" size="40"></input>
-    <button id="send" onclick="sendText()">submit</button>
-  </div>
   <div id="chat_history" style="border:sold black 1px">
     <div id="waiting" style="display: none;">AI thinking...</div>
+  </div>
+  <div>
+    <input type="text" id="user_text" size="40" tabindex="1" ></input>
+    <button id="send" tabindex="2" onclick="sendText()">submit</button>
   </div>
 </body>
 <script>
@@ -98,7 +98,7 @@
   };
 
   function messageCompaction(messages) {
-    const TOKEN_LIMIT = 500;
+    const TOKEN_LIMIT = 3900;
     let size = calcTokenSize(messages);
     console.log("total token sise:", size);
     while (size > TOKEN_LIMIT) {
