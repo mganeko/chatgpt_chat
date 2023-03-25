@@ -1,31 +1,37 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Chat</title>
   <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
-<body>
- <div>
-  <input type="text" id="user_text"></input>
-  <button id="send" onclick="sendText()">submit</button>
- </div>
- <div id="chat_history" style="border:sold black 1px">
 
- </div>
+<body>
+  <div>
+    <input type="text" id="user_text" size="40"></input>
+    <button id="send" onclick="sendText()">submit</button>
+  </div>
+  <div id="chat_history" style="border:sold black 1px">
+    <div id="waiting" style="display: none;">AI thinking...</div>
+  </div>
 </body>
 <script>
   const divChatHistory = document.getElementById('chat_history');
   const userText = document.getElementById('user_text');
+  const divWaiting = document.getElementById('waiting');
   const messages = [{
-      role: 'system',
-      content: 'あなたは親切なアシスタントです',
-    }];
+    role: 'system',
+    content: 'あなたは親切なアシスタントです',
+  }];
 
   async function sendText() {
     const text = userText.value;
     addUserText(text);
 
+    showWaiting(true);
     const response = await postText(text);
+    showWaiting(false);
     addResponseText(response.content);
 
     clearInput()
@@ -38,13 +44,17 @@
   function addUserText(text) {
     const div = document.createElement('div');
     div.innerHTML = 'user:' + text;
-    divChatHistory.appendChild(div);
+    //divChatHistory.appendChild(div);
+    divChatHistory.insertBefore(div, divWaiting);
   }
 
   function addResponseText(text) {
     const div = document.createElement('div');
-    div.innerHTML = 'AI:' + text;
-    divChatHistory.appendChild(div);
+    //div.innerHTML = 'AI:' + text;
+    div.innerHTML = 'AI:<br/>' + marked.parse(text, { gfm: false });
+
+    //divChatHistory.appendChild(div);
+    divChatHistory.insertBefore(div, divWaiting);
   }
 
   async function postText(text) {
@@ -54,10 +64,13 @@
     };
     messages.push(message);
 
+    // -- compaction --
+    messageCompaction(messages);
+
     const response = await chatCompletion(messages);
     console.log(response);
     messages.push(response);
-    
+
     return response;
   }
 
@@ -77,11 +90,51 @@
       body,
     });
     const data = await res.json();
-    console.log(data);
-  
+    //console.log(data);
+    console.log(data.usage);
+
     const choice = 0;
     return data.choices[choice].message;
   };
 
+  function messageCompaction(messages) {
+    const TOKEN_LIMIT = 500;
+    let size = calcTokenSize(messages);
+    console.log("total token sise:", size);
+    while (size > TOKEN_LIMIT) {
+      console.log("Size %d over Limit %d", size, TOKEN_LIMIT);
+      removeMessage(messages);
+      size = calcTokenSize(messages)
+    }
+  }
+
+  function removeMessage(messages) {
+    const first = messages.shift();
+    console.log('remove:', first);
+  }
+
+
+  function calcTokenSize(messages) {
+    let totalSize = 0;
+    messages.forEach(message => {
+      totalSize += calcSingleMessageToken(message);
+    });
+    return totalSize;
+  }
+
+  function calcSingleMessageToken(message) {
+    return message.content.length;
+  }
+
+  function showWaiting(flag) {
+    if (flag) {
+      divWaiting.style.display = 'block';
+    }
+    else {
+      divWaiting.style.display = 'none';
+    }
+  }
+
 </script>
+
 </html>
