@@ -12,8 +12,10 @@
     <div id="waiting" style="display: none;">AI thinking...</div>
   </div>
   <div>
-    <input type="text" id="user_text" size="40" tabindex="1" ></input>
-    <button id="send" tabindex="2" onclick="sendText()">submit</button>
+    <form name="user_text" onsubmit="sendText(); return false">
+      <input type="text" id="user_text" size="40" tabindex="1" ></input>
+      <input type="submit" value="submit" tabindex="2" />
+    </form>
   </div>
 </body>
 <script>
