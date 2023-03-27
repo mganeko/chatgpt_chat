@@ -53,13 +53,12 @@
 
     const text = userText.value;
     addUserText(text);
+    clearInput();
 
     showWaiting(true);
     const response = await postChatText(text, apiKey);
     showWaiting(false);
     addResponseText(response.content);
-
-    clearInput()
   }
 
   function clearInput() {
