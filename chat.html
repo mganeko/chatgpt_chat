@@ -32,7 +32,7 @@
     addUserText(text);
 
     showWaiting(true);
-    const response = await postText(text, apiKey);
+    const response = await postChatText(text, apiKey);
     showWaiting(false);
     addResponseText(response.content);
 
