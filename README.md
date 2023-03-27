@@ -10,6 +10,8 @@
 - js/config.templete.js を、js/config.js　にコピー
   - API_KEYの値を、発行したAPIキーに書き換え
 - ブラウザーからアクセス
+  - サーバーのURL/chat.html
+
 
 ## ライセンス/Lisence
 
