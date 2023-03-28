@@ -3,7 +3,14 @@
 //
 
 // ======= innser variable =========
-const _debugMode = false; // true / false
+const _debugMode = true; // true / false
+//const _debugMode = false; // true / false
+
+const _CHAT_MODEL = "gpt-3.5-turbo";
+//const _CHAT_MODEL = "gpt-4";
+
+
+
 const _chatapi_messages = [{
   role: 'system',
   content: 'あなたは親切なアシスタントです',
@@ -38,9 +45,10 @@ function _debugLog(...args) {
 async function _chatCompletion(messages, apiKey) {
   //const apiKey = API_KEY;
   const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
+
   const body = JSON.stringify({
     messages,
-    model: "gpt-3.5-turbo",
+    model: _CHAT_MODEL,
   });
 
   const res = await fetch(CHATAPI_URL, {
