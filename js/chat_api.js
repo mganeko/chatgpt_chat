@@ -7,8 +7,10 @@ const _debugMode = true; // true / false
 //const _debugMode = false; // true / false
 
 const _CHAT_MODEL = "gpt-3.5-turbo";
-//const _CHAT_MODEL = "gpt-4";
+const _TOKEN_LIMIT = 3900;
 
+//const _CHAT_MODEL = "gpt-4";
+//const _TOKEN_LIMIT = 7900;
 
 
 const _chatapi_messages = [{
@@ -58,21 +60,37 @@ async function _chatCompletion(messages, apiKey) {
       Authorization: `Bearer ${apiKey}`,
     },
     body,
+  }).catch(e => {
+    console.error(e);
+    return {
+      role: 'assistant',
+      content: 'Network ERROR, Plase try again.',
+    };
   });
   const data = await res.json();
-  //_debugLog(data);
-  _debugLog(data.usage);
+  _debugLog(data);
+  //_debugLog(data.usage);
 
-  const choice = 0;
-  return data.choices[choice].message;
+
+  const choiceIndex = 0;
+  //return data.choices[choiceIndex].message;
+  const choices = data?.choices;
+  if (choices) {
+    return choices[choiceIndex]?.message ?? { role: 'assistant', content : 'Empty'};
+  }
+  else {
+    return {
+      role: 'assistant',
+      content: 'Network Erorr, Plase try again.',
+    };
+  }
 };
 
 function _messageCompaction(messages) {
-  const TOKEN_LIMIT = 3900;
   let size = _calcTokenSize(messages);
   _debugLog("total token sise:", size);
-  while (size > TOKEN_LIMIT) {
-    _debugLog("Size %d over Limit %d", size, TOKEN_LIMIT);
+  while (size > _TOKEN_LIMIT) {
+    _debugLog("Size %d over Limit %d", size, _TOKEN_LIMIT);
     _removeMessage(messages);
     size = _calcTokenSize(messages)
   }
