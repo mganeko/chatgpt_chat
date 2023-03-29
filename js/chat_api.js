@@ -90,15 +90,16 @@ function _messageCompaction(messages) {
   let size = _calcTokenSize(messages);
   _debugLog("total token sise:", size);
   while (size > _TOKEN_LIMIT) {
-    _debugLog("Size %d over Limit %d", size, _TOKEN_LIMIT);
+    _debugLog("Message Token total Size %d over Limit %d", size, _TOKEN_LIMIT);
     _removeMessage(messages);
     size = _calcTokenSize(messages)
   }
 }
 
 function _removeMessage(messages) {
+  // --- remove 1st ---
   const first = messages.shift();
-  _debugLog('remove:', first);
+  _debugLog('remove message:', first);
 }
 
 
