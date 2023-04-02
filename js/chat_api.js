@@ -21,18 +21,34 @@ const _chatapi_messages = [{
 
 // ============== public function ==============
 async function postChatText(text, apiKey) {
-  const message = {
+  const userMessage = {
     role: 'user',
     content: text,
   };
-  _chatapi_messages.push(message);
+
+  // -- そのまま扱う場合 --
+  //_chatapi_messages.push(userMessage);
+  //_messageCompaction(_chatapi_messages);
+  //const response = await _chatCompletion(_chatapi_messages, apiKey);
+
+  // ==== 一時的メッセージ配列を作る ===
+  const tempMessages = Array.from(_chatapi_messages);
+  tempMessages.push(userMessage);
 
   // -- compaction --
-  _messageCompaction(_chatapi_messages);
+  _messageCompaction(tempMessages);
+  _debugLog('tempMessages:', tempMessages);
 
-  const response = await _chatCompletion(_chatapi_messages, apiKey);
+  // -- request --
+  const response = await _chatCompletion(tempMessages, apiKey);
   _debugLog(response);
-  _chatapi_messages.push(response);
+
+  // 結果が正常な場合に、userメッセージと合わせて保持する
+  if (response.role === 'assistant') {
+    _chatapi_messages.push(userMessage);
+    _chatapi_messages.push(response);
+  }
+  //_debugLog('messages:', _chatapi_messages);
 
   return response;
 }
@@ -85,7 +101,6 @@ async function _chatCompletion(messages, apiKey) {
   //_debugLog(data.usage);
 
   const choiceIndex = 0;
-  //return data.choices[choiceIndex].message;
   const choices = data?.choices;
   if (choices) {
     return choices[choiceIndex]?.message ?? { role: 'error', content : 'Response Empty'};
@@ -103,15 +118,42 @@ function _messageCompaction(messages) {
   _debugLog("total token sise:", size);
   while (size > _TOKEN_LIMIT) {
     _debugLog("Message Token total Size %d, over Limit %d", size, _TOKEN_LIMIT);
-    _removeMessage(messages);
+    _removeMessage(messages, _TOKEN_LIMIT);
     size = _calcTokenSize(messages)
   }
 }
 
-function _removeMessage(messages) {
-  // --- remove 1st ---
-  const first = messages.shift();
-  _debugLog('remove message:', first);
+function _removeMessage(messages, limitLength) {
+  if(messages.length === 0) {
+    // メッセージがない場合は、何もしない
+    return;
+  }
+  else if (messages.length === 1) {
+    // メッセージが1つの場合は、それを短くする
+    const lastMessage = messages[0];
+    lastMessage.content = _shortenContent(lastMessage.content, limitLength);
+    _debugLog('shorten last message:', lastMessage);
+    return;
+  }
+
+  // ==== メッセージが2つ以上の場合 ===
+  // systemロールをスキップ
+  let removeIndex = 0;
+  if (messages[0].role === 'system') {
+    removeIndex = 1;
+  }
+
+  // --- 最後のメッセージの場合は短くする ---
+  if (removeIndex === messages.length - 1) {
+    const lastMessage = messages[removeIndex];
+    lastMessage.content = _shortenContent(lastMessage.content, limitLength);
+    _debugLog('shorten last message:', lastMessage);
+  }
+  else {
+    // --- 最後でなければ、除去する ---
+    const removedMessage = messages.splice(removeIndex, 1);
+    _debugLog('remove message:', removedMessage);
+  }
 }
 
 
@@ -127,3 +169,6 @@ function _calcSingleMessageToken(message) {
   return message.content.length;
 }
 
+function _shortenContent(content, limitLength) {
+  content.substring(0, limitLength);
+}
