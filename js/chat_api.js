@@ -2,7 +2,7 @@
 // ChatGPT API wrapper
 //
 
-// ======= innser variable =========
+// ======= inner variable =========
 const _debugMode = true; // true / false
 //const _debugMode = false; // true / false
 
@@ -60,7 +60,7 @@ async function postChatText(text, apiKey) {
   return response;
 }
 
-// ============= inner function ============
+// ============= helper function ============
 
 // デバッグ用のログ出力
 function _debugLog(...args) {
@@ -68,6 +68,8 @@ function _debugLog(...args) {
     console.log(...args);
   }
 }
+
+// ============= inner function ============
 
 // chat API を呼び出す
 async function _chatCompletion(messages, apiKey, chatModel) {
