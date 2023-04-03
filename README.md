@@ -34,9 +34,13 @@
   - [x] サーバーのエラーメッセージを伝える
   - [ ] 適切な情報を分かりやすく利用者に伝える 
   - [x] userメッセージとassistantの返答とペアで、メッセージ保持から除外する
-- [ ] GPT-contextの導入
-  - [ ] system ロールの別保持
-  - [ ] user-important ロールを用意
-  - [ ] comcationアルゴリズムで、 systemロールとuser-importantロールをキープ
+- [ ] リファクタリング
+  - [x] コメントとをつける
+  - [ ] jsdocに従ったコメントにする
+  - [x] chat_api.jsの内部関数でグローバル定数を参照するのをやめる
+  - [ ] GPT-contextの導入し、chat_api.jsのグローバル変数(_chatapi_messages)を無くす
+    - [ ] system ロールの別保持
+    - [ ] user-important ロールを用意
+    - [ ] compactionアルゴリズムで、 systemロールとuser-importantロールをキープ
 
 

@@ -6,20 +6,27 @@
 const _debugMode = true; // true / false
 //const _debugMode = false; // true / false
 
+// ---- GPT-3.5 ----
 const _CHAT_MODEL = "gpt-3.5-turbo";
 const _TOKEN_LIMIT = 3900;
 //const _TOKEN_LIMIT = 100; // for debug, cause ERROR
 
+// ---- GPT-4 ----
 //const _CHAT_MODEL = "gpt-4";
 //const _TOKEN_LIMIT = 7900;
 
 
+// --- initial message ---
 const _chatapi_messages = [{
   role: 'system',
   content: 'あなたは親切なアシスタントです',
 }];
 
 // ============== public function ==============
+
+/*
+ * チャットメッセージを送信する
+ */
 async function postChatText(text, apiKey) {
   const userMessage = {
     role: 'user',
@@ -36,11 +43,11 @@ async function postChatText(text, apiKey) {
   tempMessages.push(userMessage);
 
   // -- compaction --
-  _messageCompaction(tempMessages);
+  _messageCompaction(tempMessages, _TOKEN_LIMIT);
   _debugLog('tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletion(tempMessages, apiKey);
+  const response = await _chatCompletion(tempMessages, apiKey, _CHAT_MODEL);
   _debugLog(response);
 
   // 結果が正常な場合に、userメッセージと合わせて保持する
@@ -55,19 +62,21 @@ async function postChatText(text, apiKey) {
 
 // ============= inner function ============
 
+// デバッグ用のログ出力
 function _debugLog(...args) {
   if (_debugMode) {
     console.log(...args);
   }
 }
 
-async function _chatCompletion(messages, apiKey) {
+// chat API を呼び出す
+async function _chatCompletion(messages, apiKey, chatModel) {
   //const apiKey = API_KEY;
   const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
   const body = JSON.stringify({
     messages,
-    model: _CHAT_MODEL,
+    model: chatModel,
   });
 
   const res = await fetch(CHATAPI_URL, {
@@ -113,17 +122,19 @@ async function _chatCompletion(messages, apiKey) {
   }
 };
 
-function _messageCompaction(messages) {
+// 過去のやり取りを制限に収まるように圧縮する
+function _messageCompaction(messages, tokenLimit) {
   let size = _calcTokenSize(messages);
   _debugLog("total token sise:", size);
-  while (size > _TOKEN_LIMIT) {
-    _debugLog("Message Token total Size %d, over Limit %d", size, _TOKEN_LIMIT);
-    _removeMessage(messages, _TOKEN_LIMIT);
+  while (size > tokenLimit) {
+    _debugLog("Message Token total Size %d, over Limit %d", size, tokenLimit);
+    _removeMessage(messages, tokenLimit);
     size = _calcTokenSize(messages)
   }
 }
 
-function _removeMessage(messages, limitLength) {
+// 過去のメッセージを取り除く
+function _removeMessage(messages, tokenLimit) {
   if(messages.length === 0) {
     // メッセージがない場合は、何もしない
     return;
@@ -131,7 +142,7 @@ function _removeMessage(messages, limitLength) {
   else if (messages.length === 1) {
     // メッセージが1つの場合は、それを短くする
     const lastMessage = messages[0];
-    lastMessage.content = _shortenContent(lastMessage.content, limitLength);
+    lastMessage.content = _shortenContent(lastMessage.content, tokenLimit);
     _debugLog('shorten last message:', lastMessage);
     return;
   }
@@ -146,7 +157,7 @@ function _removeMessage(messages, limitLength) {
   // --- 最後のメッセージの場合は短くする ---
   if (removeIndex === messages.length - 1) {
     const lastMessage = messages[removeIndex];
-    lastMessage.content = _shortenContent(lastMessage.content, limitLength);
+    lastMessage.content = _shortenContent(lastMessage.content, tokenLimit);
     _debugLog('shorten last message:', lastMessage);
   }
   else {
@@ -156,7 +167,7 @@ function _removeMessage(messages, limitLength) {
   }
 }
 
-
+// 過去のメッセージ全体のトークンサイズを計算する
 function _calcTokenSize(messages) {
   let totalSize = 0;
   messages.forEach(message => {
@@ -165,10 +176,12 @@ function _calcTokenSize(messages) {
   return totalSize;
 }
 
+// メッセージ単体のトークンサイズを計算する
 function _calcSingleMessageToken(message) {
   return message.content.length;
 }
 
-function _shortenContent(content, limitLength) {
-  content.substring(0, limitLength);
+// メッセージ単体を短くする
+function _shortenContent(content, tokenLimit) {
+  content.substring(0, tokenLimit);
 }
