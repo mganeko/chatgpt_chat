@@ -37,7 +37,7 @@
   </div>
   <div class="input_form">
     <form name="user_text" onsubmit="sendText(); return false">
-      <textarea type="text" id="user_text" cols="50" rows="5" tabindex="1"></textarea>
+      <textarea type="text" id="user_text" cols="50" rows="5" tabindex="1" onkeydown="handleKeyDown()"></textarea>
       <input type="submit" tabindex="2" />
     </form>
   </div>
@@ -60,6 +60,7 @@
     const response = await postChatText(text, apiKey);
     showWaiting(false);
     addResponseText(response.content);
+    clearInput();
   }
 
   function clearInput() {
@@ -92,6 +93,13 @@
     }
     else {
       divWaiting.style.display = 'none';
+    }
+  }
+
+  function handleKeyDown() {
+    if (event.keyCode == 13 && event.ctrlKey) {
+      sendText();
+      preventDefault();
     }
   }
 
