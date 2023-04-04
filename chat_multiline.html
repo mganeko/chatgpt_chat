@@ -2,6 +2,7 @@
 <html>
 
 <head>
+  <meta charset="utf-8">
   <title>Chat</title>
   <link rel="icon" href="img/chat.png" type="image/png">
   <script src="js/config.js"></script>
@@ -12,30 +13,39 @@
       border: solid 1px lightseagreen;
       background-color: #eafaea;
       margin: 2px;
+      padding: 2px;
     }
 
     .ai_text {
       border: solid 1px rgb(69, 105, 212);
       background-color: #e7ecfe;
       margin: 2px;
+      padding: 2px;
     }
 
     .wait_indicator {
       background-color: #fbfbec;
       margin: 1px;
+      padding: 1px;
     }
 
     .input_form {
       margin: 3px;
     }
+
+    .header_div {
+      background-color: #f0f0f0;
+    }
   </style>
 </head>
 
 <body>
+  <div id="header_div" class="header_div"></div>
   <div id="chat_history" style="border:sold black 1px">
     <div id="waiting" class="wait_indicator" style="display: none;">AI thinking...</div>
   </div>
   <div class="input_form">
+    user:<br />
     <form name="user_text" onsubmit="sendText(); return false">
       <textarea type="text" id="user_text" cols="50" rows="5" tabindex="1" onkeydown="handleKeyDown()"></textarea>
       <input type="submit" tabindex="2" />
@@ -103,6 +113,12 @@
     }
   }
 
+  // --- init header element ---
+  function insertHeader() {
+    const divHeader = document.getElementById('header_div');
+    header_div.innerHTML = HEADER_ELEMENT;
+  }
+  insertHeader();
 </script>
 
 </html>
