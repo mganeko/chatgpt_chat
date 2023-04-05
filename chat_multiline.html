@@ -10,14 +10,18 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     .user_text {
-      border: solid 1px lightseagreen;
+      border-right: solid 2px lightseagreen;      
       background-color: #eafaea;
       margin: 2px;
       padding: 2px;
     }
 
+    .right {
+      text-align: right;
+    }
+
     .ai_text {
-      border: solid 1px rgb(69, 105, 212);
+      border-left: solid 2px rgb(69, 105, 212);
       background-color: #e7ecfe;
       margin: 2px;
       padding: 2px;
@@ -80,10 +84,10 @@
   function addUserText(text) {
     const div = document.createElement('div');
     div.className = 'user_text';
+
     //div.innerHTML = 'user:' + text;
     div.innerHTML = 'user:' + marked.parse(text, { gfm: false });
 
-    //divChatHistory.appendChild(div);
     divChatHistory.insertBefore(div, divWaiting);
   }
 
