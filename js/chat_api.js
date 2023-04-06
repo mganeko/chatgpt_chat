@@ -29,7 +29,6 @@ const _chatapi_messages = [{
  */
 /**
 * チャットメッセージを送信し、応答を返す
-* @description 非同期処理なので、promiseを返す。awaitで待つと、responseが得られる
 * @description _chatapi_messages に配列としてやりとりが蓄積される
 * @param {string} text - ユーザーからのテキスト
 * @param {string} apiKey - OpenAI APIのキー
