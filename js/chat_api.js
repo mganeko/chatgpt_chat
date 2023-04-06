@@ -27,6 +27,15 @@ const _chatapi_messages = [{
 /*
  * チャットメッセージを送信する
  */
+/**
+* チャットメッセージを送信し、応答を返す
+* @description 非同期処理なので、promiseを返す。awaitで待つと、responseが得られる
+* @description _chatapi_messages に配列としてやりとりが蓄積される
+* @param {string} text - ユーザーからのテキスト
+* @param {string} apiKey - OpenAI APIのキー
+* @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
+* @example postChatText('世界で一番高い山は？, 'xxxxxxxxxx'); // returns { role: 'assistant', content: 'エベレスト'}
+*/
 async function postChatText(text, apiKey) {
   const userMessage = {
     role: 'user',

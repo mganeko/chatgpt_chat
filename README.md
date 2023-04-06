@@ -41,7 +41,10 @@
 - [ ] リファクタリング
   - [x] コメントとをつける
   - [ ] jsdocに従ったコメントにする
+    - [x] public 関数
+    - [ ] 内部関数
   - [x] chat_api.jsの内部関数でグローバル定数を参照するのをやめる
+  - [ ] init()関数を用意、モデルやトークン上限を指定できるようにする
   - [ ] GPT-contextの導入し、chat_api.jsのグローバル変数(_chatapi_messages)を無くす
     - [ ] system ロールの別保持
     - [ ] user-important ロールを用意
