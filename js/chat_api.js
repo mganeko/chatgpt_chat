@@ -122,7 +122,7 @@ async function _chatCompletion(messages, apiKey, chatModel) {
   const choiceIndex = 0;
   const choices = data?.choices;
   if (choices) {
-    return choices[choiceIndex]?.message ?? { role: 'error', content : 'Response Empty'};
+    return choices[choiceIndex]?.message ?? { role: 'error', content: 'Response Empty' };
   }
   else {
     return {
@@ -145,14 +145,15 @@ function _messageCompaction(messages, tokenLimit) {
 
 // 過去のメッセージを取り除く
 function _removeMessage(messages, tokenLimit) {
-  if(messages.length === 0) {
+  if (messages.length === 0) {
     // メッセージがない場合は、何もしない
     return;
   }
   else if (messages.length === 1) {
     // メッセージが1つの場合は、それを短くする
     const lastMessage = messages[0];
-    lastMessage.content = _shortenContent(lastMessage.content, tokenLimit);
+    const shortenContent = _shortenContent(lastMessage.content, tokenLimit);
+    lastMessage.content = shortenContent;
     _debugLog('shorten last message:', lastMessage);
     return;
   }
@@ -160,14 +161,18 @@ function _removeMessage(messages, tokenLimit) {
   // ==== メッセージが2つ以上の場合 ===
   // systemロールをスキップ
   let removeIndex = 0;
-  if (messages[0].role === 'system') {
+  let tokenLimitWithSystem = tokenLimit;
+  const firstMessage = messages[0];
+  if (firstMessage.role === 'system') {
     removeIndex = 1;
+    tokenLimitWithSystem = tokenLimit - firstMessage.content.length;
   }
 
   // --- 最後のメッセージの場合は短くする ---
   if (removeIndex === messages.length - 1) {
     const lastMessage = messages[removeIndex];
-    lastMessage.content = _shortenContent(lastMessage.content, tokenLimit);
+    const shortenContent = _shortenContent(lastMessage.content, tokenLimitWithSystem);
+    lastMessage.content = shortenContent;
     _debugLog('shorten last message:', lastMessage);
   }
   else {
@@ -193,5 +198,5 @@ function _calcSingleMessageToken(message) {
 
 // メッセージ単体を短くする
 function _shortenContent(content, tokenLimit) {
-  content.substring(0, tokenLimit);
+  return content.substring(0, tokenLimit);
 }
