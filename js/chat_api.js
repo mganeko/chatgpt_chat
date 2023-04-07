@@ -9,7 +9,7 @@ const _debugMode = true; // true / false
 // ---- GPT-3.5 ----
 const _CHAT_MODEL = "gpt-3.5-turbo";
 const _TOKEN_LIMIT = 3900;
-//const _TOKEN_LIMIT = 100; // for debug, cause ERROR
+//const _TOKEN_LIMIT = 1000; // for debug, cause ERROR
 
 // ---- GPT-4 ----
 //const _CHAT_MODEL = "gpt-4";
@@ -52,18 +52,27 @@ async function postChatText(text, apiKey) {
 
   // -- compaction --
   _messageCompaction(tempMessages, _TOKEN_LIMIT);
-  _debugLog('tempMessages:', tempMessages);
+  _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
   const response = await _chatCompletion(tempMessages, apiKey, _CHAT_MODEL);
   _debugLog(response);
 
-  // 結果が正常な場合に、userメッセージと合わせて保持する
+  // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
+  // パターン1: 圧縮前のメッセージ配列を保持する場合
+  // if (response.role === 'assistant') {
+  //   _chatapi_messages.push(userMessage);
+  //   _chatapi_messages.push(response);
+  // }
+
+  // パターン2: 圧縮後のメッセージ配列に置き換えて保持する場合
   if (response.role === 'assistant') {
-    _chatapi_messages.push(userMessage);
-    _chatapi_messages.push(response);
+    tempMessages.push(response);
+    _chatapi_messages.splice(0, _chatapi_messages.length); // 空にする
+    tempMessages.forEach((m) => _chatapi_messages.push(m)); // 代入する
   }
-  //_debugLog('messages:', _chatapi_messages);
+  
+  _debugLog('after response, messages:', _chatapi_messages);
 
   return response;
 }
@@ -152,8 +161,7 @@ function _removeMessage(messages, tokenLimit) {
   else if (messages.length === 1) {
     // メッセージが1つの場合は、それを短くする
     const lastMessage = messages[0];
-    const shortenContent = _shortenContent(lastMessage.content, tokenLimit);
-    lastMessage.content = shortenContent;
+    _shortenMessage(lastMessage, tokenLimit);
     _debugLog('shorten last message:', lastMessage);
     return;
   }
@@ -171,8 +179,7 @@ function _removeMessage(messages, tokenLimit) {
   // --- 最後のメッセージの場合は短くする ---
   if (removeIndex === messages.length - 1) {
     const lastMessage = messages[removeIndex];
-    const shortenContent = _shortenContent(lastMessage.content, tokenLimitWithSystem);
-    lastMessage.content = shortenContent;
+    _shortenMessage(lastMessage, tokenLimitWithSystem);
     _debugLog('shorten last message:', lastMessage);
   }
   else {
@@ -197,6 +204,11 @@ function _calcSingleMessageToken(message) {
 }
 
 // メッセージ単体を短くする
-function _shortenContent(content, tokenLimit) {
-  return content.substring(0, tokenLimit);
+// function _shortenContent(content, tokenLimit) {
+//   return content.substring(0, tokenLimit);
+// }
+
+function _shortenMessage(message, tokenLimit) {
+  const content = message.content;
+  message.content = content.substring(0, tokenLimit);
 }
