@@ -9,8 +9,10 @@
 - ファイル群を、Webサーバーに配置
 - js/config.templete.js を、js/config.js　にコピー
   - API_KEYの値を、発行したAPIキーに書き換え
+  - HEADER_ELEMENTの値を変更すると、ヘッダー部分の要素をカスタマイズ可能
 - ブラウザーからアクセス
-  - サーバーのURL/chat.html
+  - サーバーのURL/chat.html または サーバーのURL/chat_multiline.html
+
 
 
 ## ライセンス/Lisence
