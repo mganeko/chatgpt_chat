@@ -71,9 +71,18 @@
     clearInput();
 
     showWaiting(true);
-    const response = await postChatText(text, apiKey);
-    showWaiting(false);
-    addResponseText(response.content);
+    try {
+      const response = await postChatText(text, apiKey);
+      addResponseText(response.content);
+    }
+    catch (e) {
+      console.error(e);
+      addResponseText('Error:' + e);
+    }
+    finally {
+      showWaiting(false);
+    }
+
     clearInput();
   }
 
