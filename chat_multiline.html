@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     .user_text {
-      border-right: solid 2px lightseagreen;      
+      border-right: solid 2px lightseagreen;
       background-color: #eafaea;
       margin: 2px;
       padding: 2px;
@@ -94,14 +94,17 @@
   function addUserText(text) {
     const div = document.createElement('div');
     div.className = 'user_text';
-    div.innerHTML = 'user:' + marked.parse(text, { gfm: false });
+    //div.innerHTML = 'user:' + marked.parse(text, { gfm: false });
+    div.innerHTML = 'user:' + marked.parse(text.replace(/(\n)/g, '  \n'), { gfm: false }); // OK
+    //div.innerHTML = 'user:' + marked.parse(text.replace(/[^\s\n]+\n/g, '  \n'), { gfm: false }); // NG
     divChatHistory.insertBefore(div, divWaiting);
   }
 
   function addResponseText(text) {
     const div = document.createElement('div');
     div.className = 'ai_text';
-    div.innerHTML = 'AI:' + marked.parse(text, { gfm: false });
+    //div.innerHTML = 'AI:' + marked.parse(text, { gfm: false });
+    div.innerHTML = 'AI:' + marked.parse(text.replace(/(\n)/g, '  \n'), { gfm: false });
     divChatHistory.insertBefore(div, divWaiting);
   }
 
