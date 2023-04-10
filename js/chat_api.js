@@ -134,7 +134,10 @@ function _debugLog(...args) {
     //console.log(...args);
 
     // 呼び出し元の情報を併せて出力する
-    const line = Error().stack.split('\n')[2]; //.split(':')[1];
+    //const line = Error().stack.split('\n')[2]; //.split(':')[1];
+    const stack = Error().stack.split('\n');
+    const line = stack[2] ?? stack[1] ?? stack[0];
+
     console.log(line, ': ', ...args);
   }
 }
@@ -290,6 +293,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
   }
   finally {
     // 例外が発生しても、最後は必ず解放する
+    console.log('finally releaseLock');
     reader.releaseLock();
   }
 
