@@ -275,7 +275,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
   
       // あとはこの jsons を好きに使用する
       //console.log('jsons::', jsons);
-      const text = _buildSteamReulst(jsons);
+      const text = _buildSteamResult(jsons);
       resultText += text;
       if(chunkHander && typeof chunkHander === 'function') {
         chunkHander(text);
@@ -300,7 +300,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
   return {role: 'assistant', content: resultText};
 };
 
-function _buildSteamReulst(jsons) {
+function _buildSteamResult(jsons) {
   let text = '';
   for(let i = 0; i < jsons.length; i++) {
     const json = jsons[i];
