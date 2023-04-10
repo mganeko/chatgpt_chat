@@ -64,6 +64,7 @@
   const divInput = document.getElementById('input_form');
 
   // ==== UI functions ====
+  // ユーザーの入力をAPIに送り、応答を表示するまでの処理の全体
   async function sendText() {
     const apiKey = API_KEY;
 
@@ -87,10 +88,13 @@
     //clearInput();
   }
 
+  // 入力エリアをクリアする
   function clearInput() {
     userText.value = '';
   }
 
+  // ユーザーの入力テキストを、履歴エリアに追加する
+  // 改行対応、マークダウン対応を行う
   function addUserText(text) {
     const div = document.createElement('div');
     div.className = 'user_text';
@@ -100,6 +104,8 @@
     divChatHistory.insertBefore(div, divWaiting);
   }
 
+  // API空の回答テキストを、履歴エリアに追加する
+  // 改行対応、マークダウン対応を行う
   function addResponseText(text) {
     const div = document.createElement('div');
     div.className = 'ai_text';
@@ -109,6 +115,7 @@
     scrollToBottom();
   }
 
+  // 処理中インジケーターの表示/非表示
   function showWaiting(flag) {
     if (flag) {
       divWaiting.style.display = 'block';
@@ -118,6 +125,7 @@
     }
   }
 
+  // キー処理の監視、Ctrl+Enterで送信する
   function handleKeyDown() {
     if (event.keyCode == 13 && event.ctrlKey) {
       sendText();
@@ -125,6 +133,7 @@
     }
   }
 
+  // 最後（入力エリア）までスクロールする
   function scrollToBottom() {
     const elementPosition = divInput.getBoundingClientRect().top + window.pageYOffset;
     window.scrollTo({
@@ -134,6 +143,7 @@
   }
 
   // --- init header element ---
+  // ヘッダー部分にカスタマイズした要素を挿入する (config.jsの内容を利用)
   function insertHeader() {
     const divHeader = document.getElementById('header_div');
     header_div.innerHTML = HEADER_ELEMENT;
