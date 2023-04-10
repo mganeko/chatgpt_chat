@@ -71,7 +71,7 @@ async function postChatText(text, apiKey) {
     _chatapi_messages.splice(0, _chatapi_messages.length); // 空にする
     tempMessages.forEach((m) => _chatapi_messages.push(m)); // 代入する
   }
-  
+
   _debugLog('after response, messages:', _chatapi_messages);
 
   return response;
@@ -82,7 +82,11 @@ async function postChatText(text, apiKey) {
 // デバッグ用のログ出力
 function _debugLog(...args) {
   if (_debugMode) {
-    console.log(...args);
+    //console.log(...args);
+
+    // 呼び出し元の情報を併せて出力する
+    const line = Error().stack.split('\n')[2]; //.split(':')[1];
+    console.log(line, ': ', ...args);
   }
 }
 
