@@ -106,6 +106,7 @@
     //div.innerHTML = 'AI:' + marked.parse(text, { gfm: false });
     div.innerHTML = 'AI:' + marked.parse(text.replace(/(\n)/g, '  \n'), { gfm: false });
     divChatHistory.insertBefore(div, divWaiting);
+    scrollToBottom();
   }
 
   function showWaiting(flag) {
@@ -122,6 +123,14 @@
       sendText();
       event.preventDefault();
     }
+  }
+
+  function scrollToBottom() {
+    const elementPosition = divInput.getBoundingClientRect().top + window.pageYOffset;
+    window.scrollTo({
+      top: elementPosition,
+      behavior: 'smooth'
+    });
   }
 
   // --- init header element ---
