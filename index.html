@@ -102,6 +102,7 @@
     div.innerHTML = 'user:' + marked.parse(text.replace(/(\n)/g, '  \n'), { gfm: false }); // OK
     //div.innerHTML = 'user:' + marked.parse(text.replace(/[^\s\n]+\n/g, '  \n'), { gfm: false }); // NG
     divChatHistory.insertBefore(div, divWaiting);
+    scrollToBottom();
   }
 
   // API空の回答テキストを、履歴エリアに追加する
