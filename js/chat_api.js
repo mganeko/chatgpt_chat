@@ -208,10 +208,6 @@ function _calcSingleMessageToken(message) {
 }
 
 // メッセージ単体を短くする
-// function _shortenContent(content, tokenLimit) {
-//   return content.substring(0, tokenLimit);
-// }
-
 function _shortenMessage(message, tokenLimit) {
   const content = message.content;
   message.content = content.substring(0, tokenLimit);
