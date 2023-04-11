@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>test</title>
+  <link rel="icon" href="img/chat.png" type="image/png">
+  <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.19.4.css">
+  <script src="js/config.js"></script>
+  <script src="js/chat_api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</head>
+
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+  <script src="https://code.jquery.com/qunit/qunit-2.19.4.js"></script>
+
+</body>
+<script>
+
+  QUnit.module("_calcSingleMessageToken", function() {
+    QUnit.test("ABC", function(assert) {
+      const message = { content: 'ABC'};
+      assert.strictEqual(_calcSingleMessageToken(message), 3, "token size (ABC) === 3");
+    });
+    QUnit.test("アイウエオ", function(assert) {
+      const message = { content: 'アイウエオ'};
+      assert.strictEqual(_calcSingleMessageToken(message), 5, "token size (アイウエオ) === 5");
+    });
+  });
+
+  QUnit.module("_shortenMessage", function() {
+    QUnit.test("abcdeアイウエオかきくけこ -> 8", function(assert) {
+      const message = { content: 'abcdeアイウエオかきくけこ'};
+      _shortenMessage(message, 8);
+      assert.strictEqual(_calcSingleMessageToken(message), 8,  "after shorten token size === 8");
+    });
+  });
+
+  QUnit.module("_calcTokenSize", function() {
+    QUnit.test("3つのメッセージの合計トークンサイズ", function(assert) {
+      const message0 = { role: 'system', content: 'abcdeアイウエオかきくけこ'};
+      const mesaage1 = { role: 'user', content: '1234567890'};
+      const mesaage2 = { role: 'assistant', content: 'アシスタントの答え'};
+      const messages = [message0, mesaage1, mesaage2];
+      assert.strictEqual(_calcTokenSize(messages), 15+10+9,  "token size === 34");
+    });
+  });
+
+  QUnit.module("_removeMessage", function() {
+    QUnit.test("空っぽの場合、何もしない", function(assert) {
+      const limit = 8;
+      const messages = [];
+      _removeMessage(messages, limit)
+      assert.strictEqual(messages.length, 0,  "messages is empty");
+    });
+
+    QUnit.test("メッセージが1個の場合、その1個を短くする", function(assert) {
+      const limit = 8;
+      const message0 = { role: 'system', content: 'abcdeアイウエオかきくけこ'};
+      const messages = [message0];
+      _removeMessage(messages, limit)
+      assert.strictEqual(messages.length, 1,  "messages has 1 element");
+      assert.strictEqual(_calcTokenSize(messages), limit,  "messages token size is 8");
+    });
+
+    // メッセージが2個の場合、最初のメッセージを除外する
+
+
+    // メッセージが2個で、最初がsystemの場合
+
+    // メッセージが3個で、最初がsystemの場合
+
+  });
+</script>
+
+</html>
