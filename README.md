@@ -58,5 +58,9 @@
     - [ ] system ロールの別保持
     - [ ] user-important ロールを用意
     - [ ] compactionアルゴリズムで、 systemロールとuser-importantロールをキープ
+- [ ] テスト
+  - [ ] ユニットテスト
+  - [ ] E2E テスト
+
 
 
