@@ -66,13 +66,50 @@
       assert.strictEqual(_calcTokenSize(messages), limit,  "messages token size is 8");
     });
 
-    // メッセージが2個の場合、最初のメッセージを除外する
+    QUnit.test("メッセージが2個の場合、最初のメッセージを除去する", function(assert) {
+      const limit = 8;
+      const message0 = { role: 'user', content: 'abcdeアイウエオかきくけこ'};
+      const message1 = { role: 'assistant', content: 'ハロー'};
+      const messages = [message0, message1];
+      _removeMessage(messages, limit)
+      assert.strictEqual(messages.length, 1,  "messages has 1 element");
+      assert.strictEqual(messages[0].content, 'ハロー',  "2nd message is left");
+    });
+
+    QUnit.test("メッセージが2個で、最初がsystemの場合、systemは残して2番目を短くする", function(assert) {
+      const limit = 8;
+      const message0 = { role: 'system', content: 'abcde'};
+      const message1 = { role: 'user', content: 'ハローハロー'};
+      const messages = [message0, message1];
+      _removeMessage(messages, limit)
+      assert.strictEqual(messages.length, 2,  "messages has 2 element");
+      assert.strictEqual(messages[0].role, 'system',  "system message is left");
+      assert.strictEqual(messages[0].content, 'abcde',  "system message is left");
+      assert.strictEqual(messages[1].role, 'user',  "user message is left");
+      assert.strictEqual(messages[1].content, 'ハロー',  "user message is shorten");
+    });
 
 
-    // メッセージが2個で、最初がsystemの場合
+  });
 
-    // メッセージが3個で、最初がsystemの場合
+  QUnit.module("_messageCompaction", function() {
+    QUnit.test("空っぽの場合、何もしない", function(assert) {
+      const limit = 8;
+      const messages = [];
+      _messageCompaction(messages, limit)
+      assert.strictEqual(messages.length, 0,  "messages is empty");
+    });
 
+    QUnit.test("メッセージが3個の場合、最初2個のメッセージを除去、最後を短縮する", function(assert) {
+      const limit = 8;
+      const message0 = { role: 'user', content: 'abcdeアイウエオかきくけこ'};
+      const message1 = { role: 'assistant', content: 'ハロー'};
+      const message2 = { role: 'user', content: 'How are you?'};
+      const messages = [message0, message1, message2];
+      _messageCompaction(messages, limit)
+      assert.strictEqual(messages.length, 1,  "messages has 1 element");
+      assert.strictEqual(messages[0].content, 'How are ',  "3rd message is left, but shorten");
+    });
   });
 </script>
 
