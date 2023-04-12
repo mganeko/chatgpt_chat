@@ -111,6 +111,21 @@
       assert.strictEqual(messages[0].content, 'How are ',  "3rd message is left, but shorten");
     });
   });
+
+
+  QUnit.module("postChatText", function() {
+    QUnit.test("APIキーが間違っていたらエラーが返る", async function(assert) {
+      const response = await postChatText("富士山の高さを数字だけで答えて", "dummy-key");
+      assert.strictEqual(response.role,  'error',  "response is error");
+    });
+
+    QUnit.test("正しいAPIキーで、答えが返る", async function(assert) {
+      const response = await postChatText("富士山の高さを数字だけで答えて", API_KEY);
+      assert.strictEqual(response.role,  'assistant',  "response is assistant");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'),  "富士山は3776メートル");
+    });
+  });
+
 </script>
 
 </html>
