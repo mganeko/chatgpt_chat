@@ -148,33 +148,37 @@
     });
   });
 
-  QUnit.module("postChatText", function () {
+  QUnit.module("postChatText/streamChatText", function () {
     // メッセージの蓄積は増えない
-    QUnit.test("APIキーが間違っていたらエラーが返る", async function (assert) {
+    QUnit.test("APIキーが間違っていたらエラーが返る。メッセージは増えない", async function (assert) {
+      const len = _chatapi_messages.length;
       const response = await postChatText("富士山の高さを数字だけで答えて", "dummy-key");
       assert.strictEqual(response.role, 'error', "response is error");
+      assert.strictEqual(_chatapi_messages.length, len, "messages is not changed");
     });
 
     // メッセージの蓄積が増える
-    QUnit.test("正しいAPIキーで、答えが返る", async function (assert) {
+    QUnit.test("正しいAPIキーで、答えが返る。メッセージが2個増える", async function (assert) {
+      const len = _chatapi_messages.length;
       const response = await postChatText("富士山の高さを数字だけで答えて", API_KEY);
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(_chatapi_messages.length, len + 2, "messages is changed");
     });
 
-  });
+    // ストリーミングでもメッセージの蓄積が増える
+    QUnit.test("ストリーミングの蓄積と、最終の答えが一致する。メッセージが2個増える", async function (assert) {
+      let streamText = '';
+      function handleSteam(text) {
+        streamText += text;
+      }
 
-  QUnit.module("streamChatText", function () {
-    let streamText = '';
-    function handleSteam(text) {
-      streamText += text;
-    }
-
-    QUnit.test("ストリーミングの蓄積と、最終の答えが一致する", async function (assert) {
+      const len = _chatapi_messages.length;
       const response = await streamChatText("富士山の高さを数字だけで答えて", API_KEY, handleSteam);
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(_chatapi_messages.length, len + 2, "messages is changed");
     });
   });
 
