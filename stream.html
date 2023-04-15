@@ -55,6 +55,10 @@
     <form name="user_text" onsubmit="sendText(); return false">
       <textarea type="text" id="user_text" cols="50" rows="5" tabindex="1" onkeydown="handleKeyDown()"></textarea>
       <input type="submit" tabindex="2" />
+      <br />
+      <span style="font-size: smaller;">
+      <input type="checkbox" id="use_stream" checked >ストリーム応答</input>
+      </span>
     </form>
   </div>
 </body>
@@ -65,6 +69,7 @@
   const divWaiting = document.getElementById('waiting');
   const divWaitStreaming = document.getElementById('wait_streaming_div');
   const divInput = document.getElementById('input_form');
+  const useStreamCheck = document.getElementById('use_stream');
 
   // ==== UI functions ====
   // ユーザーの入力をAPIに送り、応答を表示するまでの処理の全体
@@ -77,11 +82,19 @@
 
     showWaiting(true);
     try {
-      const response = await streamChatText(text, apiKey, (x) => {
-        //console.log('stream:', x);
-        divWaitStreaming.innerHTML += x;
-      });
-      addResponseText(response.content);
+      if (useStreamCheck.checked) {
+        // ストリームモードを利用
+        const response = await streamChatText(text, apiKey, (x) => {
+          //console.log('stream:', x);
+          divWaitStreaming.innerHTML += x;
+        });
+        addResponseText(response.content);
+      }
+      else {
+        // 通常モード
+        const response = await postChatText(text, apiKey);
+        addResponseText(response.content);
+      }
     }
     catch (e) {
       console.error(e);
