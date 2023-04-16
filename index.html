@@ -46,13 +46,19 @@
 <body>
   <div id="header_div" class="header_div"></div>
   <div id="chat_history" style="border:sold black 1px">
-    <div id="waiting" class="wait_indicator" style="display: none;">AI thinking...</div>
+    <div id="waiting" class="wait_indicator" style="display: none;">AI thinking...
+      <div id="wait_streaming_div"></div>
+    </div>
   </div>
   <div id="input_form" class="input_form">
     user:<br />
     <form name="user_text" onsubmit="sendText(); return false">
-      <textarea type="text" id="user_text" cols="50" rows="5" tabindex="1" onkeydown="handleKeyDown()"></textarea>
+      <textarea type="text" id="user_text" cols="60" rows="5" tabindex="1" onkeydown="handleKeyDown()"></textarea>
       <input type="submit" tabindex="2" />
+      <br />
+      <span style="font-size: smaller;">
+      <input type="checkbox" id="use_stream" checked >ストリーム応答</input>
+      </span>
     </form>
   </div>
 </body>
@@ -61,7 +67,9 @@
   const divChatHistory = document.getElementById('chat_history');
   const userText = document.getElementById('user_text');
   const divWaiting = document.getElementById('waiting');
+  const divWaitStreaming = document.getElementById('wait_streaming_div');
   const divInput = document.getElementById('input_form');
+  const useStreamCheck = document.getElementById('use_stream');
 
   // ==== UI functions ====
   // ユーザーの入力をAPIに送り、応答を表示するまでの処理の全体
@@ -74,8 +82,19 @@
 
     showWaiting(true);
     try {
-      const response = await postChatText(text, apiKey);
-      addResponseText(response.content);
+      if (useStreamCheck.checked) {
+        // ストリームモードを利用
+        const response = await streamChatText(text, apiKey, (x) => {
+          //console.log('stream:', x);
+          divWaitStreaming.innerHTML += x;
+        });
+        addResponseText(response.content);
+      }
+      else {
+        // 通常モード
+        const response = await postChatText(text, apiKey);
+        addResponseText(response.content);
+      }
     }
     catch (e) {
       console.error(e);
@@ -123,6 +142,7 @@
     }
     else {
       divWaiting.style.display = 'none';
+      divWaitStreaming.innerHTML = '';
     }
   }
 
