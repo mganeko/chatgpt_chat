@@ -32,8 +32,8 @@ const _chatapi_messages = [{
 * @description _chatapi_messages に配列としてやりとりが蓄積される
 * @param {string} text - ユーザーからのテキスト
 * @param {string} apiKey - OpenAI APIのキー
-* @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
-* @example postChatText('世界で一番高い山は？, 'xxxxxxxxxx'); // returns { role: 'assistant', content: 'エベレスト'}
+* @returns {object} 応答 - { message: { role: 'assistant' / 'error', content: 生成されたテキスト }, usage: { completion_tokens: 17, prompt_tokens: 38, total_tokens: 55} }
+* @example postChatText('世界で一番高い山は？, 'xxxxxxxxxx'); // returns { message: { role: 'assistant', content: 'エベレスト'}, usage: { completion_tokens: num, prompt_tokens: num, total_tokens: num} }
 */
 async function postChatText(text, apiKey) {
   const userMessage = {
@@ -55,8 +55,8 @@ async function postChatText(text, apiKey) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletion(tempMessages, apiKey, _CHAT_MODEL);
-  _debugLog(response);
+  const {message, usage} = await _chatCompletion(tempMessages, apiKey, _CHAT_MODEL);
+  _debugLog(message, usage);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
   // パターン1: 圧縮前のメッセージ配列を保持する場合
@@ -66,15 +66,15 @@ async function postChatText(text, apiKey) {
   // }
 
   // パターン2: 圧縮後のメッセージ配列に置き換えて保持する場合
-  if (response.role === 'assistant') {
-    tempMessages.push(response);
+  if (message.role === 'assistant') {
+    tempMessages.push(message);
     _chatapi_messages.splice(0, _chatapi_messages.length); // 空にする
     tempMessages.forEach((m) => _chatapi_messages.push(m)); // 代入する
   }
 
   _debugLog('after response, messages:', _chatapi_messages);
 
-  return response;
+  return {message: message, usage: usage};
 }
 
 // ===== streaming function =====
@@ -145,9 +145,14 @@ function _debugLog(...args) {
 // ============= inner function ============
 
 // chat API を呼び出す
+// return {
+//   message: { role: 'assistant', content: 'こんにちは' },
+//   usage: { completion_tokens: 17, prompt_tokens: 38, total_tokens: 55}
+// }
 async function _chatCompletion(messages, apiKey, chatModel) {
   //const apiKey = API_KEY;
   const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
+  const USAGE_FOR_ERROR = { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0};
 
   const body = JSON.stringify({
     messages,
@@ -163,20 +168,33 @@ async function _chatCompletion(messages, apiKey, chatModel) {
     body,
   }).catch(e => {
     console.error(e);
-    return {
+    const message = {
       role: 'error',
       content: 'Network ERROR, Plase try again.',
     };
+    const usage = USAGE_FOR_ERROR;
+    return { message: message, usage: usage };
+
+    // return {
+    //   role: 'error',
+    //   content: 'Network ERROR, Plase try again.',
+    // };
   });
 
   // エラー判定
   if (!res.ok) {
     const responseText = await res.text();
     _debugLog(res, responseText);
-    return {
+    const message = {
       role: 'error',
       content: 'Server Error:' + res.status + '. ' + responseText,
     };
+    const usage = USAGE_FOR_ERROR;
+    return { message: message, usage: usage };
+    // return {
+    //   role: 'error',
+    //   content: 'Server Error:' + res.status + '. ' + responseText,
+    // };
   }
 
   // 応答を解析
@@ -187,13 +205,22 @@ async function _chatCompletion(messages, apiKey, chatModel) {
   const choiceIndex = 0;
   const choices = data?.choices;
   if (choices) {
-    return choices[choiceIndex]?.message ?? { role: 'error', content: 'Response Empty' };
+    const message = choices[choiceIndex]?.message ?? { role: 'error', content: 'Response Empty' };
+    const usage = data.usage ?? USAGE_FOR_ERROR;
+    return { message: message, usage: usage };
+    //return choices[choiceIndex]?.message ?? { role: 'error', content: 'Response Empty' };
   }
   else {
-    return {
+    const message = {
       role: 'error',
       content: 'Sever Erorr, Plase try again.',
     };
+    const usage = USAGE_FOR_ERROR;
+    return { message: message, usage: usage };
+    // return {
+    //   role: 'error',
+    //   content: 'Sever Erorr, Plase try again.',
+    // };
   }
 };
 
@@ -201,6 +228,7 @@ async function _chatCompletion(messages, apiKey, chatModel) {
 // 参考: https://zenn.dev/himanushi/articles/99579cf407c30b
 async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
   const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
+  const USAGE_FOR_ERROR = { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0};
 
   const body = JSON.stringify({
     messages,
@@ -217,30 +245,36 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
     body,
   }).catch(e => {
     console.error(e);
-    return {
+    const message = {
       role: 'error',
       content: 'Network ERROR, Plase try again.',
     };
+    const usage = USAGE_FOR_ERROR;
+    return { message: message, usage: usage };
   });
 
   // エラー判定
   if (!res.ok) {
     const responseText = await res.text();
     _debugLog(res, responseText);
-    return {
+    const message = {
       role: 'error',
       content: 'Server Error:' + res.status + '. ' + responseText,
     };
+    const usage = USAGE_FOR_ERROR;
+    return { message: message, usage: usage };
   }
 
   // ReadableStream として使用する
   const reader = res.body?.getReader();
   if (!reader) {
     _debugLog('ERROR to get streaming');
-    return {
+    const message = {
       role: 'error',
       content: 'Server Error: No Streaming response',
     };
+    const usage = USAGE_FOR_ERROR;
+    return { message: message, usage: usage };
   }
 
   let resultText = '';
@@ -256,7 +290,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
       // data: { ... }
       // これは Event stream format と呼ばれる形式
       // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format
-      //console.log(chunk);
+      console.log(chunk);
       
       const jsons = chunk
         .split('data:') // 複数格納されていることもあるため split する
@@ -289,7 +323,9 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
     await read();
   } catch (e) {
     console.error(e);
-    return {role: 'error', content: e.message };
+    const message = {role: 'error', content: e.message };
+    const usage = USAGE_FOR_ERROR;
+    return { message: message, usage: usage };
   }
   finally {
     // 例外が発生しても、最後は必ず解放する
@@ -301,7 +337,9 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
   // reader.releaseLock();
 
   // 最終結果を返す
-  return {role: 'assistant', content: resultText};
+  const message = {role: 'assistant', content: resultText};
+  const usage = USAGE_FOR_ERROR;
+  return { message: message, usage: usage };
 };
 
 function _buildSteamResult(jsons) {
