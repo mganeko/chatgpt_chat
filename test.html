@@ -161,6 +161,11 @@
       assert.strictEqual(message.role, 'assistant', "response is assistant");
       assert.strictEqual(message.content, streamText, "stream summary and reponse.content is same");
       assert.ok(message.content.includes('3776') || message.content.includes('3,776'), "富士山は3776メートル");
+
+      // --- streamモードでは、トークン数がわからないので、チェックしない ---
+      //assert.true(usage.completion_tokens > 0, "completion_tokens > 0");
+      //assert.true(usage.prompt_tokens > 0, "prompt_tokens > 0");
+      //assert.true(usage.total_tokens > 0, "total_tokens > 0");
     });
   });
 
@@ -182,7 +187,6 @@
       assert.strictEqual(_chatapi_messages.length, len + 2, "messages is changed");
     });
 
-    /*
     // ストリーミングでもメッセージの蓄積が増える
     QUnit.test("ストリーミングの蓄積と、最終の答えが一致する。メッセージが2個増える", async function (assert) {
       let streamText = '';
@@ -191,13 +195,12 @@
       }
 
       const len = _chatapi_messages.length;
-      const response = await streamChatText("富士山の高さを数字だけで答えて", API_KEY, handleSteam);
-      assert.strictEqual(response.role, 'assistant', "response is assistant");
-      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
-      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      const {message, usage} = await streamChatText("富士山の高さを数字だけで答えて", API_KEY, handleSteam);
+      assert.strictEqual(message.role, 'assistant', "response is assistant");
+      assert.strictEqual(message.content, streamText, "stream summary and reponse.content is same");
+      assert.ok(message.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
       assert.strictEqual(_chatapi_messages.length, len + 2, "messages is changed");
     });
-    */
   });
 
 </script>

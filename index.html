@@ -84,16 +84,16 @@
     try {
       if (useStreamCheck.checked) {
         // ストリームモードを利用
-        const response = await streamChatText(text, apiKey, (x) => {
+        const {message, usage} = await streamChatText(text, apiKey, (x) => {
           //console.log('stream:', x);
           divWaitStreaming.innerHTML += x;
         });
-        addResponseText(response.content);
+        addResponseText(message.content);
       }
       else {
         // 通常モード
-        const response = await postChatText(text, apiKey);
-        addResponseText(response.content);
+        const {message, usage}  = await postChatText(text, apiKey);
+        addResponseText(message.content);
       }
     }
     catch (e) {

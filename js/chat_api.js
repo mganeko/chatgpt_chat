@@ -104,8 +104,8 @@ async function streamChatText(text, apiKey, chunkHander) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletionStream(tempMessages, apiKey, _CHAT_MODEL, chunkHander);
-  _debugLog(response);
+  const {message, usage} = await _chatCompletionStream(tempMessages, apiKey, _CHAT_MODEL, chunkHander);
+  _debugLog(message);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
   // パターン1: 圧縮前のメッセージ配列を保持する場合
@@ -115,15 +115,15 @@ async function streamChatText(text, apiKey, chunkHander) {
   // }
 
   // パターン2: 圧縮後のメッセージ配列に置き換えて保持する場合
-  if (response.role === 'assistant') {
-    tempMessages.push(response);
+  if (message.role === 'assistant') {
+    tempMessages.push(message);
     _chatapi_messages.splice(0, _chatapi_messages.length); // 空にする
     tempMessages.forEach((m) => _chatapi_messages.push(m)); // 代入する
   }
 
   _debugLog('after response, messages:', _chatapi_messages);
 
-  return response;
+  return {message: message, usage: usage};
 }
 
 // ============= helper function ============
