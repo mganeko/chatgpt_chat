@@ -290,7 +290,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
       // data: { ... }
       // これは Event stream format と呼ばれる形式
       // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format
-      //console.log(chunk);
+      console.log(chunk);
       
       const jsons = chunk
         .split('data:') // 複数格納されていることもあるため split する
