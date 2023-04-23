@@ -72,13 +72,13 @@ function clearChatHistory(ctx) {
  */
 /**
 * チャットメッセージを送信し、応答を返す
-* @description _chatapi_messages に配列としてやりとりが蓄積される
+* @description ctx.chat_messages に配列としてやりとりが蓄積される
 * @param {string} text - ユーザーからのテキスト
-* @param {string} apiKey - OpenAI APIのキー
+* @param {object} ctx - GPTコンテキスト
 * @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
-* @example postChatText('世界で一番高い山は？, 'xxxxxxxxxx'); // returns { role: 'assistant', content: 'エベレスト'}
+* @example postChatText('世界で一番高い山は？, ctx); // returns { role: 'assistant', content: 'エベレスト'}
 */
-async function postChatText(text, apiKey) {
+async function postChatText(text, ctx) {
   const userMessage = {
     role: 'user',
     content: text,
@@ -90,7 +90,7 @@ async function postChatText(text, apiKey) {
   //const response = await _chatCompletion(_chatapi_messages, apiKey);
 
   // ==== 一時的メッセージ配列を作る ===
-  const tempMessages = Array.from(_chatapi_messages);
+  const tempMessages = Array.from(ctx.chat_messages);
   tempMessages.push(userMessage);
 
   // -- compaction --
@@ -98,24 +98,17 @@ async function postChatText(text, apiKey) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletion(tempMessages, apiKey, _CHAT_MODEL);
+  const response = await _chatCompletion(tempMessages, ctx.apiKey, _CHAT_MODEL);
   _debugLog(response);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
-  // パターン1: 圧縮前のメッセージ配列を保持する場合
-  // if (response.role === 'assistant') {
-  //   _chatapi_messages.push(userMessage);
-  //   _chatapi_messages.push(response);
-  // }
-
   // パターン2: 圧縮後のメッセージ配列に置き換えて保持する場合
   if (response.role === 'assistant') {
     tempMessages.push(response);
-    _chatapi_messages.splice(0, _chatapi_messages.length); // 空にする
-    tempMessages.forEach((m) => _chatapi_messages.push(m)); // 代入する
+    ctx.chat_messages = tempMessages; // コンテキストのチャット履歴を置き換える
   }
 
-  _debugLog('after response, messages:', _chatapi_messages);
+  _debugLog('after response, messages:', ctx.chat_messages);
 
   return response;
 }
@@ -126,20 +119,21 @@ async function postChatText(text, apiKey) {
  */
 /**
 * チャットメッセージを送信し、ストリーミングで応答を返す
-* @description _chatapi_messages に配列としてやりとりが蓄積される
+* @description ctx.chat_messages に配列としてやりとりが蓄積される
 * @param {string} text - ユーザーからのテキスト
-* @param {string} apiKey - OpenAI APIのキー
+* @param {object} ctx - GPTコンテキスト
+* @param {function} chunkHander - ストリーミングでトークンを処理するハンドラ
 * @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
-* @example postChatText('世界で一番高い山は？, 'xxxxxxxxxx'); // returns { role: 'assistant', content: 'エベレスト'}
+* @example streamChatText('世界で一番高い山は？, ctx, hunder); // returns { role: 'assistant', content: 'エベレスト'}
 */
-async function streamChatText(text, apiKey, chunkHander) {
+async function streamChatText(text, ctx, chunkHander) {
   const userMessage = {
     role: 'user',
     content: text,
   };
 
   // ==== 一時的メッセージ配列を作る ===
-  const tempMessages = Array.from(_chatapi_messages);
+  const tempMessages = Array.from(ctx.chat_messages);
   tempMessages.push(userMessage);
 
   // -- compaction --
@@ -147,24 +141,17 @@ async function streamChatText(text, apiKey, chunkHander) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletionStream(tempMessages, apiKey, _CHAT_MODEL, chunkHander);
+  const response = await _chatCompletionStream(tempMessages, ctx.apiKey, _CHAT_MODEL, chunkHander);
   _debugLog(response);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
-  // パターン1: 圧縮前のメッセージ配列を保持する場合
-  // if (response.role === 'assistant') {
-  //   _chatapi_messages.push(userMessage);
-  //   _chatapi_messages.push(response);
-  // }
-
   // パターン2: 圧縮後のメッセージ配列に置き換えて保持する場合
   if (response.role === 'assistant') {
     tempMessages.push(response);
-    _chatapi_messages.splice(0, _chatapi_messages.length); // 空にする
-    tempMessages.forEach((m) => _chatapi_messages.push(m)); // 代入する
+    ctx.chat_messages = tempMessages; // コンテキストのチャット履歴を置き換える
   }
 
-  _debugLog('after response, messages:', _chatapi_messages);
+  _debugLog('after response, messages:', ctx.chat_messages);
 
   return response;
 }
