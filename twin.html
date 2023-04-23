@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Chat</title>
+  <link rel="icon" href="img/chat.png" type="image/png">
+</head>
+
+<body>
+  <iframe id="normal" src="index.html" width="48%" height="600px"></iframe>
+  <iframe id="stream" src="index.html" width="48%" height="600px"></iframe>
+  <br />
+  <textarea type="text" id="user_text" cols="60" rows="5"></textarea>
+  <button id="start" onclick="start()">start</button>
+
+</body>
+<script>
+  function start() {
+    const normal = document.getElementById('normal').contentWindow;
+    const stream = document.getElementById('stream').contentWindow;
+    const normalDoc = normal.document;
+    const streamDoc = stream.document;
+    normalDoc.getElementById('use_stream').checked = false;
+
+    const text = document.getElementById('user_text').value;
+    normalDoc.getElementById('user_text').value = text;
+    streamDoc.getElementById('user_text').value = text;
+
+
+    normal.sendText();
+    stream.sendText();
+
+    //normal.postMessage('start', '*');
+    //stream.postMessage('start', '*');
+  }
+</script>
+
+</html>
