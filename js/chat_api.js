@@ -15,6 +15,9 @@ const _TOKEN_LIMIT = 3900;
 //const _CHAT_MODEL = "gpt-4";
 //const _TOKEN_LIMIT = 7900;
 
+// ---- API URL ---
+const _CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
+
 
 // --- initial message ---
 const _chatapi_messages = [{
@@ -23,6 +26,46 @@ const _chatapi_messages = [{
 }];
 
 // ============== public function ==============
+
+/*
+ * Chatを初期化する
+ */
+/**
+* Chatを初期化し、GPTコンテキストを返す
+* @description Chatを初期化、GPTコンテキストを返す
+* @param {string} apiKey - OpenAI APIのキー
+* @param {object} options - オプション, nullもOK
+* @returns {object} GPTコンテキスt 
+* @example initChat('xxxxxxxxxx'); // returns gptContext
+*/
+function initChat(apiKey, options = null) {
+  const gptCtx = _initGptContext(apiKey);
+  return gptCtx;
+}
+
+/*
+ * チャットの履歴をクリアする
+ */
+/**
+* GPTコンテキストのチャット履歴をクリアする
+* @description GPTコンテキストのチャット履歴をクリアする。system メッセージは残す
+* @param {object} ctx - GPTコンテキスト
+* @returns  void
+* @example clearChatHistory(ctx); // returns nothing
+*/
+function clearChatHistory(ctx) {
+  if ((!ctx) ||  (!ctx.chat_messages) || (ctx.chat_messages.length === 0))
+    return;
+
+  if (ctx.chat_messages[0].role === 'system') {
+    // system は残す
+    ctx.chat_messages.splice(1);
+  }
+  else {
+    // 全て削除する
+    ctx.chat_messages.splice(0);
+  }
+}
 
 /*
  * チャットメッセージを送信する
@@ -144,17 +187,44 @@ function _debugLog(...args) {
 
 // ============= inner function ============
 
+// GPTコンテキストを初期化する
+function _initGptContext(apiKey) {
+  const defaultMessage = _getDefaultMessage();
+  const gptCtx = {
+    apiKey: apiKey,
+    // options: {
+    //   model: options.model ?? _CHAT_MODEL,
+    //   sendTokenLimit: options.sendTokenLimit ?? _TOKEN_LIMIT,
+    //   //maxTokens: options.maxTokens ?? _TOKEN_LIMIT,
+    //   url: options.url ?? _CHATAPI_URL,
+    //   temperature: options.temperature ?? 0.7,
+    // }
+    chat_messages : defaultMessage,
+  };
+
+  return gptCtx;
+}
+
+// デフォルトのメッセージ履歴を用意する
+function _getDefaultMessage() {
+  const messages = [{
+    role: 'system',
+    content: 'あなたは親切なアシスタントです',
+  }];
+  return messages;
+}
+
 // chat API を呼び出す
 async function _chatCompletion(messages, apiKey, chatModel) {
   //const apiKey = API_KEY;
-  const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
+  //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
   const body = JSON.stringify({
     messages,
     model: chatModel,
   });
 
-  const res = await fetch(CHATAPI_URL, {
+  const res = await fetch(_CHATAPI_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -200,7 +270,7 @@ async function _chatCompletion(messages, apiKey, chatModel) {
 // chat API を呼び出し、ストリーミングで応答を返す
 // 参考: https://zenn.dev/himanushi/articles/99579cf407c30b
 async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
-  const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
+  //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
   const body = JSON.stringify({
     messages,
@@ -208,7 +278,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, chunkHander) {
     stream: true // ここで stream を有効にする
   });
 
-  const res = await fetch(CHATAPI_URL, {
+  const res = await fetch(_CHATAPI_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
