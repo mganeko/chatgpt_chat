@@ -29,7 +29,7 @@
   - [ ] systemロール、初回の一往復を保持
   - [ ] 情報量が多いやり取りを保持？ 
   - [ ] 情報量の判定方法を考える
-- [ ] UI改善
+- [x] UI改善
   - [x] 一番上に、ヘッダー要素を表示
       - [x] config.js の内容を差し込む
   - [x] ボタンを日本語に（送信）... 指定抜きで、デフォルトに任せる
@@ -40,6 +40,7 @@
   - [x] AI回答があったときの、自動スクロール
   - [x] ストリーミング対応 (stream.html)
   - [x] preタグを試す(Not Good.不採用)
+- [ ] トークン数を返す、表示する
 - [ ] バグ修正
   - [x] 1つの入力が長い（limit以上）の場合に短縮するロジックのバグを修正
 - [ ] userメッセージの送信後にエラーが返ってきた場合
@@ -54,11 +55,25 @@
     - [x] public 関数
     - [ ] 内部関数
   - [x] chat_api.jsの内部関数でグローバル定数を参照するのをやめる
-  - [ ] init()関数を用意、モデルやトークン上限を指定できるようにする
+  - [ ] initChat()関数を用意、モデルやトークン上限を指定できるようにする
+    - [x] API_KEYを渡す (must)
+    - [x] contextを返す
+    - [ ] URL (option)
+    - [ ] model (option)
+    - [ ] system message (option)
+    - [ ] Azure (option)
+    - [ ] send token limit (option)
+    - [ ] receive token limit (option)
+    - [ ] templature (option)
   - [ ] GPT-contextの導入し、chat_api.jsのグローバル変数(_chatapi_messages)を無くす
     - [ ] system ロールの別保持
     - [ ] user-important ロールを用意
     - [ ] compactionアルゴリズムで、 systemロールとuser-importantロールをキープ
+    - [x] postChatText()にcontextを渡す
+    - [x] streamChatText()にcontextを渡す
+    - [ ] _chatCompletion()でcontextを使う
+    - [ ] _chatCompletionStream()でcontextを使う
+    - [x] 履歴をクリアする clearChatHistory()
 - [ ] テスト
   - [x] ユニットテスト
     - [x] 同期関数テスト

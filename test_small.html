@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>test</title>
+  <link rel="icon" href="img/chat.png" type="image/png">
+  <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.19.4.css">
+  <script src="js/config.js"></script>
+  <script src="js/chat_api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</head>
+
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+  <script src="https://code.jquery.com/qunit/qunit-2.19.4.js"></script>
+
+</body>
+<script>
+  QUnit.module("_initGptContext", function () {
+    QUnit.test("init with apiKey", function (assert) {
+      const ctx = _initGptContext('thisIsKey');
+      assert.strictEqual(ctx.apiKey, 'thisIsKey', "apiKey === 'thisIsKey'");
+      assert.strictEqual(ctx.chat_messages.length, 1, "messages len === 1");
+      assert.strictEqual(ctx.chat_messages[0].role, 'system', "messages[0].role === 'system'");
+    });
+  });
+
+  QUnit.module("initChat", function () {
+    QUnit.test("init with apiKey", function (assert) {
+      const ctx = initChat('thisIsKey');
+      assert.strictEqual(ctx.apiKey, 'thisIsKey', "apiKey === 'thisIsKey'");
+      assert.strictEqual(ctx.chat_messages.length, 1, "messages len === 1");
+      assert.strictEqual(ctx.chat_messages[0].role, 'system', "messages[0].role === 'system'");
+    });
+  });
+
+  QUnit.module("clearChatHistory", function () {
+    QUnit.test("clear messages, do nothing if empty", function (assert) {
+      const ctxUndefined = undefined;
+      const ctxEmpty = { };
+      const ctxNullMessages = { chat_messages: null };
+      const ctxEmptyMessages = { chat_messages: [] };
+ 
+      assert.notOk(clearChatHistory(ctxUndefined), "clearChatHistory(undefined) === false");
+      assert.notOk(clearChatHistory(ctxEmpty), "clearChatHistory(ctxEmpty) === false");
+      assert.notOk(clearChatHistory(ctxNullMessages), "clearChatHistory(ctxNullMessages) === false");
+      assert.notOk(clearChatHistory(ctxEmptyMessages), "clearChatHistory(ctxEmptyMessages) === false");
+    });
+
+    QUnit.test("clear messages, clear all message", function (assert) {
+      const ctx = { chat_messages: [] };
+      ctx.chat_messages.push({ role: 'user', content: 'abcdeアイウエオかきくけこ' });
+      ctx.chat_messages.push({ role: 'assistant', content: 'zzz終わり' });
+      assert.strictEqual(ctx.chat_messages.length, 2, "messages len === 2, before clear");
+      clearChatHistory(ctx);
+      assert.strictEqual(ctx.chat_messages.length, 0, "messages len === 0, after clear");
+    });
+
+    QUnit.test("clear messages, keep system message", function (assert) {
+      const ctx = initChat('thisIsKey');
+      ctx.chat_messages.push({ role: 'user', content: 'abcdeアイウエオかきくけこ' });
+      ctx.chat_messages.push({ role: 'assistant', content: 'zzz終わり' });
+      assert.strictEqual(ctx.chat_messages.length, 3, "messages len === 3, before clear");
+      clearChatHistory(ctx);
+      assert.strictEqual(ctx.chat_messages.length, 1, "messages len === 1, after clear");
+    });
+  });
+
+  QUnit.module("_calcSingleMessageToken", function () {
+    QUnit.test("ABC", function (assert) {
+      const message = { content: 'ABC' };
+      assert.strictEqual(_calcSingleMessageToken(message), 3, "token size (ABC) === 3");
+    });
+    QUnit.test("アイウエオ", function (assert) {
+      const message = { content: 'アイウエオ' };
+      assert.strictEqual(_calcSingleMessageToken(message), 5, "token size (アイウエオ) === 5");
+    });
+  });
+
+  QUnit.module("_shortenMessage", function () {
+    QUnit.test("abcdeアイウエオかきくけこ -> 8", function (assert) {
+      const message = { content: 'abcdeアイウエオかきくけこ' };
+      _shortenMessage(message, 8);
+      assert.strictEqual(_calcSingleMessageToken(message), 8, "after shorten token size === 8");
+    });
+  });
+
+  QUnit.module("_calcTokenSize", function () {
+    QUnit.test("3つのメッセージの合計トークンサイズ", function (assert) {
+      const message0 = { role: 'system', content: 'abcdeアイウエオかきくけこ' };
+      const mesaage1 = { role: 'user', content: '1234567890' };
+      const mesaage2 = { role: 'assistant', content: 'アシスタントの答え' };
+      const messages = [message0, mesaage1, mesaage2];
+      assert.strictEqual(_calcTokenSize(messages), 15 + 10 + 9, "token size === 34");
+    });
+  });
+
+  QUnit.module("_removeMessage", function () {
+    QUnit.test("空っぽの場合、何もしない", function (assert) {
+      const limit = 8;
+      const messages = [];
+      _removeMessage(messages, limit)
+      assert.strictEqual(messages.length, 0, "messages is empty");
+    });
+
+    QUnit.test("メッセージが1個の場合、その1個を短くする", function (assert) {
+      const limit = 8;
+      const message0 = { role: 'system', content: 'abcdeアイウエオかきくけこ' };
+      const messages = [message0];
+      _removeMessage(messages, limit)
+      assert.strictEqual(messages.length, 1, "messages has 1 element");
+      assert.strictEqual(_calcTokenSize(messages), limit, "messages token size is 8");
+    });
+
+    QUnit.test("メッセージが2個の場合、最初のメッセージを除去する", function (assert) {
+      const limit = 8;
+      const message0 = { role: 'user', content: 'abcdeアイウエオかきくけこ' };
+      const message1 = { role: 'assistant', content: 'ハロー' };
+      const messages = [message0, message1];
+      _removeMessage(messages, limit)
+      assert.strictEqual(messages.length, 1, "messages has 1 element");
+      assert.strictEqual(messages[0].content, 'ハロー', "2nd message is left");
+    });
+
+    QUnit.test("メッセージが2個で、最初がsystemの場合、systemは残して2番目を短くする", function (assert) {
+      const limit = 8;
+      const message0 = { role: 'system', content: 'abcde' };
+      const message1 = { role: 'user', content: 'ハローハロー' };
+      const messages = [message0, message1];
+      _removeMessage(messages, limit)
+      assert.strictEqual(messages.length, 2, "messages has 2 element");
+      assert.strictEqual(messages[0].role, 'system', "system message is left");
+      assert.strictEqual(messages[0].content, 'abcde', "system message is left");
+      assert.strictEqual(messages[1].role, 'user', "user message is left");
+      assert.strictEqual(messages[1].content, 'ハロー', "user message is shorten");
+    });
+
+
+  });
+
+  QUnit.module("_messageCompaction", function () {
+    QUnit.test("空っぽの場合、何もしない", function (assert) {
+      const limit = 8;
+      const messages = [];
+      _messageCompaction(messages, limit)
+      assert.strictEqual(messages.length, 0, "messages is empty");
+    });
+
+    QUnit.test("メッセージが3個の場合、最初2個のメッセージを除去、最後を短縮する", function (assert) {
+      const limit = 8;
+      const message0 = { role: 'user', content: 'abcdeアイウエオかきくけこ' };
+      const message1 = { role: 'assistant', content: 'ハロー' };
+      const message2 = { role: 'user', content: 'How are you?' };
+      const messages = [message0, message1, message2];
+      _messageCompaction(messages, limit)
+      assert.strictEqual(messages.length, 1, "messages has 1 element");
+      assert.strictEqual(messages[0].content, 'How are ', "3rd message is left, but shorten");
+    });
+  });
+
+  /*---- large test -----
+  QUnit.module("_chatCompletion", function () {
+    const MODEL = "gpt-3.5-turbo";
+    const message0 = { role: 'system', content: 'あなたは親切なアシスタントです' };
+    const message1 = { role: 'user', content: '富士山の高さを数字だけで答えて' };
+    const messages = [message0, message1];
+
+    QUnit.test("APIキーが間違っていたらエラーが返る", async function (assert) {
+      const response = await _chatCompletion(messages, "dummy-key", MODEL);
+      assert.strictEqual(response.role, 'error', "response is error");
+    });
+
+    QUnit.test("正しいAPIキーで、答えが返る", async function (assert) {
+      const response = await _chatCompletion(messages, API_KEY, MODEL);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+    });
+  });
+
+  QUnit.module("_chatCompletionStream", function () {
+    const MODEL = "gpt-3.5-turbo";
+    const message0 = { role: 'system', content: 'あなたは親切なアシスタントです' };
+    const message1 = { role: 'user', content: '富士山の高さを数字だけで答えて' };
+    const messages = [message0, message1];
+    let streamText = '';
+    function handleSteam(text) {
+      streamText += text;
+    }
+
+    QUnit.test("ストリーミングの蓄積と、最終の答えが一致する", async function (assert) {
+      const response = await _chatCompletionStream(messages, API_KEY, MODEL, handleSteam);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+    });
+  });
+
+  QUnit.module("postChatText/streamChatText", function () {
+    // メッセージの蓄積は増えない
+    QUnit.test("APIキーが間違っていたらエラーが返る。メッセージは増えない", async function (assert) {
+      const len = _chatapi_messages.length;
+      const response = await postChatText("富士山の高さを数字だけで答えて", "dummy-key");
+      assert.strictEqual(response.role, 'error', "response is error");
+      assert.strictEqual(_chatapi_messages.length, len, "messages is not changed");
+    });
+
+    // メッセージの蓄積が増える
+    QUnit.test("正しいAPIキーで、答えが返る。メッセージが2個増える", async function (assert) {
+      const len = _chatapi_messages.length;
+      const response = await postChatText("富士山の高さを数字だけで答えて", API_KEY);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(_chatapi_messages.length, len + 2, "messages is changed");
+    });
+
+    // ストリーミングでもメッセージの蓄積が増える
+    QUnit.test("ストリーミングの蓄積と、最終の答えが一致する。メッセージが2個増える", async function (assert) {
+      let streamText = '';
+      function handleSteam(text) {
+        streamText += text;
+      }
+
+      const len = _chatapi_messages.length;
+      const response = await streamChatText("富士山の高さを数字だけで答えて", API_KEY, handleSteam);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(_chatapi_messages.length, len + 2, "messages is changed");
+    });
+  });
+  --- large test ----*/
+</script>
+
+</html>

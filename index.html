@@ -63,6 +63,9 @@
   </div>
 </body>
 <script>
+  // ==== global context ===
+  let gptCtx = null;
+
   // ==== UI elements ====
   const divChatHistory = document.getElementById('chat_history');
   const userText = document.getElementById('user_text');
@@ -84,7 +87,7 @@
     try {
       if (useStreamCheck.checked) {
         // ストリームモードを利用
-        const response = await streamChatText(text, apiKey, (x) => {
+        const response = await streamChatText(text, gptCtx, (x) => {
           //console.log('stream:', x);
           divWaitStreaming.innerHTML += x;
         });
@@ -92,7 +95,7 @@
       }
       else {
         // 通常モード
-        const response = await postChatText(text, apiKey);
+        const response = await postChatText(text, gptCtx);
         addResponseText(response.content);
       }
     }
@@ -170,6 +173,10 @@
     header_div.innerHTML = HEADER_ELEMENT;
   }
   insertHeader();
+
+  // --- init Gpt context ---
+  gptCtx = initChat(API_KEY); // Chatを初期化し、GPTコンテキストを保持する
+  
 </script>
 
 </html>
