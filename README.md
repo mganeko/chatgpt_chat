@@ -58,10 +58,11 @@
   - [ ] initChat()関数を用意、モデルやトークン上限を指定できるようにする
     - [x] API_KEYを渡す (must)
     - [x] contextを返す
-    - [ ] URL (option)
+    - [x] URL (option)
     - [x] model (option)
     - [ ] system message (option)
     - [ ] Azure (option)
+  - [ ] postChatText() / streamChatText() でオプション指定
     - [ ] send token limit (option)
     - [ ] receive token limit (option)
     - [ ] templature (option)

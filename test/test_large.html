@@ -21,17 +21,18 @@
 <script>
   QUnit.module("_chatCompletion", function () {
     const MODEL = "gpt-3.5-turbo";
+    const URL = "https://api.openai.com/v1/chat/completions";
     const message0 = { role: 'system', content: 'あなたは親切なアシスタントです' };
     const message1 = { role: 'user', content: '富士山の高さを数字だけで答えて' };
     const messages = [message0, message1];
 
     QUnit.test("APIキーが間違っていたらエラーが返る", async function (assert) {
-      const response = await _chatCompletion(messages, "dummy-key", MODEL);
+      const response = await _chatCompletion(messages, "dummy-key", MODEL, URL);
       assert.strictEqual(response.role, 'error', "response is error");
     });
 
     QUnit.test("正しいAPIキーで、答えが返る", async function (assert) {
-      const response = await _chatCompletion(messages, API_KEY, MODEL);
+      const response = await _chatCompletion(messages, API_KEY, MODEL, URL);
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
     });
@@ -39,6 +40,7 @@
 
   QUnit.module("_chatCompletionStream", function () {
     const MODEL = "gpt-3.5-turbo";
+    const URL = "https://api.openai.com/v1/chat/completions";
     const message0 = { role: 'system', content: 'あなたは親切なアシスタントです' };
     const message1 = { role: 'user', content: '富士山の高さを数字だけで答えて' };
     const messages = [message0, message1];
@@ -48,7 +50,7 @@
     }
 
     QUnit.test("ストリーミングの蓄積と、最終の答えが一致する", async function (assert) {
-      const response = await _chatCompletionStream(messages, API_KEY, MODEL, handleSteam);
+      const response = await _chatCompletionStream(messages, API_KEY, MODEL, URL, handleSteam);
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
@@ -94,6 +96,15 @@
       assert.strictEqual(response.content, '3776', "only'3776' with GPT-4");
       assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
     });
+
+    // 間違ったurlを指定
+    QUnit.test("間違ったurlを指定、エラーが返る。メッセージは増えない", async function (assert) {
+      const ctx = initChat(API_KEY, { url: "https://api.example.com" });
+      const len = ctx.chat_messages.length;
+      const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
+      assert.strictEqual(response.role, 'error', "response is error");
+      assert.strictEqual(ctx.chat_messages.length, len, "messages is not changed");
+    });
   });
 
   QUnit.module("streamChatText", function () {
@@ -105,6 +116,20 @@
       }
 
       const ctx = initChat("dummy-key");
+      const len = ctx.chat_messages.length;
+      const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam);
+      assert.strictEqual(response.role, 'error', "response is error");
+      assert.strictEqual(ctx.chat_messages.length, len, "messages is not changed");
+    });
+
+    // ストリーミングでもメッセージの蓄積は増えない
+    QUnit.test("間違ったurlを指定、エラーが返る。メッセージは増えない", async function (assert) {
+      let streamText = '';
+      function handleSteam(text) {
+        streamText += text;
+      }
+
+      const ctx = initChat(API_KEY, { url: "https://api.example.com" });
       const len = ctx.chat_messages.length;
       const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam);
       assert.strictEqual(response.role, 'error', "response is error");
