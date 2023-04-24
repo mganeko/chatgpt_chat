@@ -203,6 +203,26 @@ function _getDefaultMessage() {
   return messages;
 }
 
+// ヘッダーを組み立てる
+function _buildHeaders(apiKey, url) {
+  const useAzure = false;
+
+  if (useAzure) {
+    const headers = {
+      "Content-Type": "application/json",
+      "api-key": `${apiKey}`,
+    };
+    return headers;
+  }
+  else {
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    };
+    return headers;
+  }
+}
+
 // chat API を呼び出す
 async function _chatCompletion(messages, apiKey, chatModel, url) {
   //const apiKey = API_KEY;
@@ -212,13 +232,11 @@ async function _chatCompletion(messages, apiKey, chatModel, url) {
     messages,
     model: chatModel,
   });
+  const headers = _buildHeaders(apiKey, url);
 
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers: headers,
     body,
   }).catch(e => {
     console.error(e);
@@ -269,13 +287,11 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
     model: chatModel,
     stream: true // ここで stream を有効にする
   });
+  const headers = _buildHeaders(apiKey, url);
 
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers: headers,
     body,
   }).catch(e => {
     console.error(e);

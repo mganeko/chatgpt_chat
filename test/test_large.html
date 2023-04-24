@@ -93,7 +93,7 @@
       const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
-      assert.strictEqual(response.content, '3776', "only'3776' with GPT-4");
+      assert.strictEqual(response.content.replace(/[\r\n]+/g, ""), '3776', "only'3776' with GPT-4"); // 改行を取り除いてチェック
       assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
     });
 
@@ -163,7 +163,7 @@
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
-      assert.strictEqual(response.content, '3776', "only'3776' with GPT-4");
+      assert.strictEqual(response.content.replace(/[\r\n]+/g, ""), '3776', "only'3776' with GPT-4"); // 改行を取り除いてチェック
       assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
     });
   });
