@@ -7,7 +7,7 @@ const _debugMode = true; // true / false
 //const _debugMode = false; // true / false
 
 // ---- GPT-3.5 ----
-const _CHAT_MODEL = "gpt-3.5-turbo";
+const _DEFAULT_CHAT_MODEL = "gpt-3.5-turbo";
 const _TOKEN_LIMIT = 3900;
 //const _TOKEN_LIMIT = 1000; // for debug, cause ERROR
 
@@ -20,10 +20,10 @@ const _CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
 
 // --- initial message ---
-const _chatapi_messages = [{
-  role: 'system',
-  content: 'あなたは親切なアシスタントです',
-}];
+// const _chatapi_messages = [{
+//   role: 'system',
+//   content: 'あなたは親切なアシスタントです',
+// }];
 
 // ============== public function ==============
 
@@ -39,7 +39,7 @@ const _chatapi_messages = [{
 * @example initChat('xxxxxxxxxx'); // returns gptContext
 */
 function initChat(apiKey, options = null) {
-  const gptCtx = _initGptContext(apiKey);
+  const gptCtx = _initGptContext(apiKey, options);
   return gptCtx;
 }
 
@@ -98,7 +98,7 @@ async function postChatText(text, ctx) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletion(tempMessages, ctx.apiKey, _CHAT_MODEL);
+  const response = await _chatCompletion(tempMessages, ctx.apiKey, ctx.model);
   _debugLog(response);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
@@ -141,7 +141,7 @@ async function streamChatText(text, ctx, chunkHander) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletionStream(tempMessages, ctx.apiKey, _CHAT_MODEL, chunkHander);
+  const response = await _chatCompletionStream(tempMessages, ctx.apiKey, ctx.model, chunkHander);
   _debugLog(response);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
@@ -175,10 +175,11 @@ function _debugLog(...args) {
 // ============= inner function ============
 
 // GPTコンテキストを初期化する
-function _initGptContext(apiKey) {
+function _initGptContext(apiKey, options) {
   const defaultMessage = _getDefaultMessage();
   const gptCtx = {
     apiKey: apiKey,
+    model: options?.model ?? _DEFAULT_CHAT_MODEL,
     // options: {
     //   model: options.model ?? _CHAT_MODEL,
     //   sendTokenLimit: options.sendTokenLimit ?? _TOKEN_LIMIT,

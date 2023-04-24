@@ -59,7 +59,7 @@
     - [x] API_KEYを渡す (must)
     - [x] contextを返す
     - [ ] URL (option)
-    - [ ] model (option)
+    - [x] model (option)
     - [ ] system message (option)
     - [ ] Azure (option)
     - [ ] send token limit (option)

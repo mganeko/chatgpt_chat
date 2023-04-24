@@ -74,6 +74,26 @@
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
       assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
     });
+
+    // modelとしてmonkeyGPTを指定
+      QUnit.test("modelとしてmonkeyGPTを指定、エラーが返る。メッセージは増えない", async function (assert) {
+      const ctx = initChat(API_KEY, { model: "monkeyGPT" });
+      const len = ctx.chat_messages.length;
+      const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
+      assert.strictEqual(response.role, 'error', "response is error");
+      assert.strictEqual(ctx.chat_messages.length, len, "messages is not changed");
+    });
+
+    // modelとしてGPT-4を指定
+    QUnit.test("modelとしてGPT-4を指定、答えが返る。メッセージが2個増える", async function (assert) {
+      const ctx = initChat(API_KEY, { model: "gpt-4" });
+      const len = ctx.chat_messages.length;
+      const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(response.content, '3776', "only'3776' with GPT-4");
+      assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
+    });
   });
 
   QUnit.module("streamChatText", function () {
@@ -103,6 +123,22 @@
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
+    });
+
+    // ストリーミングでもmodelとしてGPT-4を指定
+    QUnit.test("ストリーミングでもmodelとしてGPT-4を指定、答えが返る。メッセージが2個増える", async function (assert) {
+      let streamText = '';
+      function handleSteam(text) {
+        streamText += text;
+      }
+      const ctx = initChat(API_KEY, { model: "gpt-4" });
+      const len = ctx.chat_messages.length;
+      const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(response.content, '3776', "only'3776' with GPT-4");
       assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
     });
   });
