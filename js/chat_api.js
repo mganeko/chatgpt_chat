@@ -54,7 +54,7 @@ function initChat(apiKey, options = null) {
 * @example clearChatHistory(ctx); // returns nothing
 */
 function clearChatHistory(ctx) {
-  if ((!ctx) ||  (!ctx.chat_messages) || (ctx.chat_messages.length === 0))
+  if ((!ctx) || (!ctx.chat_messages) || (ctx.chat_messages.length === 0))
     return;
 
   if (ctx.chat_messages[0].role === 'system') {
@@ -188,7 +188,7 @@ function _initGptContext(apiKey, options) {
     //   url: options.url ?? _CHATAPI_URL,
     //   temperature: options.temperature ?? 0.7,
     // }
-    chat_messages : defaultMessage,
+    chat_messages: defaultMessage,
   };
 
   return gptCtx;
@@ -205,7 +205,7 @@ function _getDefaultMessage() {
 
 // ヘッダーを組み立てる
 function _buildHeaders(apiKey, url) {
-  const useAzure = false;
+  const useAzure = isOnAzure(url);
 
   if (useAzure) {
     const headers = {
@@ -221,6 +221,10 @@ function _buildHeaders(apiKey, url) {
     };
     return headers;
   }
+}
+
+function isOnAzure(url) {
+  return url.includes('openai.azure.com/openai/');
 }
 
 // chat API を呼び出す
@@ -331,14 +335,14 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
     const read = async () => {
       const { done, value } = await reader.read();
       if (done) return reader.releaseLock();
-  
+
       const chunk = decoder.decode(value, { stream: true });
       // この chunk には以下のようなデータ格納されている。複数格納されることもある。
       // data: { ... }
       // これは Event stream format と呼ばれる形式
       // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format
       //console.log(chunk);
-      
+
       const jsons = chunk
         .split('data:') // 複数格納されていることもあるため split する
         // data を json parse する
@@ -356,12 +360,12 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
           return JSON.parse(data.trim());
         })
         .filter((data) => data);
-  
+
       // あとはこの jsons を好きに使用する
       //console.log('jsons::', jsons);
       const text = _buildSteamResult(jsons);
       resultText += text;
-      if(chunkHander && typeof chunkHander === 'function') {
+      if (chunkHander && typeof chunkHander === 'function') {
         chunkHander(text);
       }
 
@@ -370,7 +374,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
     await read();
   } catch (e) {
     console.error(e);
-    return {role: 'error', content: e.message };
+    return { role: 'error', content: e.message };
   }
   finally {
     // 例外が発生しても、最後は必ず解放する
@@ -382,12 +386,12 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
   // reader.releaseLock();
 
   // 最終結果を返す
-  return {role: 'assistant', content: resultText};
+  return { role: 'assistant', content: resultText };
 };
 
 function _buildSteamResult(jsons) {
   let text = '';
-  for(let i = 0; i < jsons.length; i++) {
+  for (let i = 0; i < jsons.length; i++) {
     const json = jsons[i];
     if (json.choices) {
       const choice = json.choices[0];

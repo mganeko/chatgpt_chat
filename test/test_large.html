@@ -181,6 +181,24 @@
     }
   });
 
+  QUnit.module("for Azure", function () {
+    if (TEST_CHECK_AZURE) {
+      QUnit.test("正しいAPIキーとURLで、答えが返る。メッセージが2個増える", async function (assert) {
+        const ctx = initChat(TEST_AZURE_API_KEY, { url: TEST_AZURE_API_URL });
+        const len = ctx.chat_messages.length;
+        const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
+        assert.strictEqual(response.role, 'assistant', "response is assistant");
+        assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+        assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
+      });
+    }
+    else {
+      QUnit.test("Azure OpenAI のテスト。設定によりスキップ", async function (assert) {
+        assert.ok(!TEST_CHECK_AZURE, "Azure OpenAIはスキップ");
+      });
+    }
+  });
+
 </script>
 
 </html>

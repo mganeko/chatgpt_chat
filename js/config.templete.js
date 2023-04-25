@@ -18,4 +18,6 @@ const HEADER_ELEMENT = 'Simple Chat using ChatGPT API<br />Type any text, and cl
 // ---- for test ---
 const TEST_CHECK_GPT4 = false;
 const TEST_CHECK_AZURE = false;
+const TEST_AZURE_API_KEY = "";
+const TEST_AZURE_API_URL = "";
 

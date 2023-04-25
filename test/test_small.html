@@ -38,7 +38,7 @@
       assert.strictEqual(ctx.url, 'https://api.openai.com/v1/chat/completions', "url === 'https://api.openai.com/v1/chat/completions'");
     });
     QUnit.test("init with apiKey, options", function (assert) {
-      const ctx = initChat('thisIsKey', { model: 'monkeyModel', url: 'https://api.example.com'});
+      const ctx = initChat('thisIsKey', { model: 'monkeyModel', url: 'https://api.example.com' });
       assert.strictEqual(ctx.apiKey, 'thisIsKey', "apiKey === 'thisIsKey'");
       assert.strictEqual(ctx.chat_messages.length, 1, "messages len === 1");
       assert.strictEqual(ctx.chat_messages[0].role, 'system', "messages[0].role === 'system'");
@@ -170,6 +170,24 @@
       assert.strictEqual(messages[0].content, 'How are ', "3rd message is left, but shorten");
     });
   });
+
+  QUnit.module("_buildHeaders", function () {
+    QUnit.test("apiKeyのみ。Bearer", function (assert) {
+      const headers = _buildHeaders("dummyKey", "https://api.example.com");
+      assert.strictEqual(headers['Content-Type'], "application/json", "Conetent-Type ===  'application/json'");
+      assert.ok(headers.Authorization.includes("Bearer"), "Auth Type is Bearer");
+      assert.ok(headers.Authorization.includes("dummyKey"), "Auth key has 'dummyKey'");
+    });
+
+    QUnit.test("Azureのケース。api-key", function (assert) {
+      const testUrl = "https://example.openai.azure.com/openai/deployments/example/chat/completions?api-version=2023-01-01-dummy";
+      const headers = _buildHeaders("azureKey", testUrl);
+      assert.strictEqual(headers['Content-Type'], "application/json", "Conetent-Type ===  'application/json'");
+      assert.notOk(headers.Authorization, "Auth Type is NOT Bearer");
+      assert.strictEqual(headers['api-key'], 'azureKey', "Auth key === 'azureKey'");
+    });
+  });
+
 
   /*---- large test -----
   QUnit.module("_chatCompletion", function () {
