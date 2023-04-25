@@ -78,7 +78,7 @@
     });
 
     // modelとしてmonkeyGPTを指定
-      QUnit.test("modelとしてmonkeyGPTを指定、エラーが返る。メッセージは増えない", async function (assert) {
+    QUnit.test("modelとしてmonkeyGPTを指定、エラーが返る。メッセージは増えない", async function (assert) {
       const ctx = initChat(API_KEY, { model: "monkeyGPT" });
       const len = ctx.chat_messages.length;
       const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
@@ -87,16 +87,22 @@
     });
 
     // modelとしてGPT-4を指定
-    QUnit.test("modelとしてGPT-4を指定、答えが返る。メッセージが2個増える", async function (assert) {
-      const ctx = initChat(API_KEY, { model: "gpt-4" });
-      const len = ctx.chat_messages.length;
-      const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
-      assert.strictEqual(response.role, 'assistant', "response is assistant");
-      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
-      assert.strictEqual(response.content.replace(/[\r\n]+/g, ""), '3776', "only'3776' with GPT-4"); // 改行を取り除いてチェック
-      assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
-    });
-
+    if (TEST_CHECK_GPT4) {
+      QUnit.test("modelとしてGPT-4を指定、答えが返る。メッセージが2個増える", async function (assert) {
+        const ctx = initChat(API_KEY, { model: "gpt-4" });
+        const len = ctx.chat_messages.length;
+        const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
+        assert.strictEqual(response.role, 'assistant', "response is assistant");
+        assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+        assert.strictEqual(response.content.replace(/[\r\n]+/g, ""), '3776', "only'3776' with GPT-4"); // 改行を取り除いてチェック
+        assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
+      });
+    }
+    else {
+      QUnit.test("modelとしてGPT-4を指定。設定によりスキップ", async function (assert) {
+        assert.ok(!TEST_CHECK_GPT4, "GPT-4はスキップ");
+      });
+    }
     // 間違ったurlを指定
     QUnit.test("間違ったurlを指定、エラーが返る。メッセージは増えない", async function (assert) {
       const ctx = initChat(API_KEY, { url: "https://api.example.com" });
@@ -152,20 +158,27 @@
     });
 
     // ストリーミングでもmodelとしてGPT-4を指定
-    QUnit.test("ストリーミングでもmodelとしてGPT-4を指定、答えが返る。メッセージが2個増える", async function (assert) {
-      let streamText = '';
-      function handleSteam(text) {
-        streamText += text;
-      }
-      const ctx = initChat(API_KEY, { model: "gpt-4" });
-      const len = ctx.chat_messages.length;
-      const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam);
-      assert.strictEqual(response.role, 'assistant', "response is assistant");
-      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
-      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
-      assert.strictEqual(response.content.replace(/[\r\n]+/g, ""), '3776', "only'3776' with GPT-4"); // 改行を取り除いてチェック
-      assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
-    });
+    if (TEST_CHECK_GPT4) {
+      QUnit.test("ストリーミングでもmodelとしてGPT-4を指定、答えが返る。メッセージが2個増える", async function (assert) {
+        let streamText = '';
+        function handleSteam(text) {
+          streamText += text;
+        }
+        const ctx = initChat(API_KEY, { model: "gpt-4" });
+        const len = ctx.chat_messages.length;
+        const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam);
+        assert.strictEqual(response.role, 'assistant', "response is assistant");
+        assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
+        assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+        assert.strictEqual(response.content.replace(/[\r\n]+/g, ""), '3776', "only'3776' with GPT-4"); // 改行を取り除いてチェック
+        assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
+      });
+    }
+    else {
+      QUnit.test("ストリーミングでもmodelとしてGPT-4を指定。設定によりスキップ", async function (assert) {
+        assert.ok(!TEST_CHECK_GPT4, "GPT-4はスキップ");
+      });
+    }
   });
 
 </script>
