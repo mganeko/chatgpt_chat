@@ -233,7 +233,7 @@ async function _chatCompletion(messages, apiKey, chatModel, url) {
   //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
   const body = JSON.stringify({
-    messages,
+    messages: messages,
     model: chatModel,
   });
   const headers = _buildHeaders(apiKey, url);
@@ -287,7 +287,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
   //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
   const body = JSON.stringify({
-    messages,
+    messages: messages,
     model: chatModel,
     stream: true // ここで stream を有効にする
   });

@@ -148,7 +148,7 @@
       QUnit.test("modelとしてGPT-4を指定、答えが返る。メッセージが2個増える", async function (assert) {
         const ctx = initChat(API_KEY, { model: "gpt-4" });
         const len = ctx.chat_messages.length;
-        const response = await postChatText("富士山の高さを数字だけで答えて", ctx);
+        const response = await postChatText("富士山の高さを数字だけで答えて。カンマ無しで", ctx);
         assert.strictEqual(response.role, 'assistant', "response is assistant");
         assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
         assert.strictEqual(response.content.replace(/[\r\n]+/g, ""), '3776', "only'3776' with GPT-4"); // 改行を取り除いてチェック
@@ -163,7 +163,7 @@
         }
         const ctx = initChat(API_KEY, { model: "gpt-4" });
         const len = ctx.chat_messages.length;
-        const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam);
+        const response = await streamChatText("富士山の高さを数字だけで答えて。カンマ無しで", ctx, handleSteam);
         assert.strictEqual(response.role, 'assistant', "response is assistant");
         assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
         assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
