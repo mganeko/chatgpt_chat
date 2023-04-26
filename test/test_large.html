@@ -119,6 +119,15 @@
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
       assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
     });
+
+    // 無効なtemperatureオプションを指定
+      QUnit.test("無効なtemperatureオプションを指定、エラーが返る。メッセージは増えない", async function (assert) {
+      const ctx = initChat(API_KEY);
+      const len = ctx.chat_messages.length;
+      const response = await postChatText("富士山の高さを数字だけで答えて", ctx, { temperature: 10 });
+      assert.strictEqual(response.role, 'error', "response is error");
+      assert.strictEqual(ctx.chat_messages.length, len, "messages is not changed");
+    });
   });
 
   QUnit.module("streamChatText", function () {
