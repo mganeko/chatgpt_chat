@@ -36,6 +36,12 @@
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
     });
+
+    QUnit.test("temperatureオプションを指定する", async function (assert) {
+      const response = await _chatCompletion(messages, API_KEY, MODEL, URL, { temperature: 0.2 });
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+    });
   });
 
   QUnit.module("_chatCompletionStream", function () {
@@ -50,7 +56,16 @@
     }
 
     QUnit.test("ストリーミングの蓄積と、最終の答えが一致する", async function (assert) {
+      streamText = '';
       const response = await _chatCompletionStream(messages, API_KEY, MODEL, URL, handleSteam);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+    });
+
+    QUnit.test("ストリーミングでもtemperatureオプションを指定する。蓄積と、最終の答えが一致する", async function (assert) {
+      streamText = '';
+      const response = await _chatCompletionStream(messages, API_KEY, MODEL, URL, handleSteam, { temperature: 0.2 });
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
@@ -94,6 +109,16 @@
       assert.strictEqual(response.role, 'error', "response is error");
       assert.strictEqual(ctx.chat_messages.length, len, "messages is not changed");
     });
+
+    // temperatureオプションを指定
+    QUnit.test("temperatureオプションを指定、答えが返る。メッセージが2個増える", async function (assert) {
+      const ctx = initChat(API_KEY);
+      const len = ctx.chat_messages.length;
+      const response = await postChatText("富士山の高さを数字だけで答えて", ctx, { temperature: 0.2 });
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
+    });
   });
 
   QUnit.module("streamChatText", function () {
@@ -134,6 +159,21 @@
       const ctx = initChat(API_KEY);
       const len = ctx.chat_messages.length;
       const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+      assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
+    });
+
+    // temperatureオプションを指定
+    QUnit.test("temperatureオプションを指定、答えが返る。メッセージが2個増える", async function (assert) {
+      let streamText = '';
+      function handleSteam(text) {
+        streamText += text;
+      }
+      const ctx = initChat(API_KEY);
+      const len = ctx.chat_messages.length;
+      const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam, { temperature: 0.2 });
       assert.strictEqual(response.role, 'assistant', "response is assistant");
       assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
       assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");

@@ -188,6 +188,27 @@
     });
   });
 
+  QUnit.module("_mergeOptions", function () {
+    QUnit.test("オプションが何も無い場合はマージされない", function (assert) {
+      const body = { model: 'monekyModel'};
+      let noOptions;
+      _mergeOptions(body, noOptions);
+      assert.strictEqual(body.model, 'monekyModel', "model is same");
+    });
+
+    QUnit.test("無効なオプションはマージされない", function (assert) {
+      const body = { model: 'monekyModel'};
+      _mergeOptions(body, { invalidOption: 'invalidValue' });
+      assert.notOk(body.invalidOption, "invalidOption is not merged");
+    });
+
+    QUnit.test("temperatureオプションはマージされる", function (assert) {
+      const body = { model: 'monekyModel'};
+      _mergeOptions(body, { temperature: 0.5 });
+      assert.strictEqual(body.temperature, 0.5, "temperature is merged");
+    });
+  });
+
 
   /*---- large test -----
   QUnit.module("_chatCompletion", function () {

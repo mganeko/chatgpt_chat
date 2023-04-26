@@ -29,6 +29,7 @@
   - [ ] systemロール、初回の一往復を保持
   - [ ] 情報量が多いやり取りを保持？ 
   - [ ] 情報量の判定方法を考える
+  - [ ] 過去のやりとりを要約して覚える
 - [x] UI改善
   - [x] 一番上に、ヘッダー要素を表示
       - [x] config.js の内容を差し込む
@@ -65,7 +66,7 @@
   - [ ] postChatText() / streamChatText() でオプション指定
     - [ ] send token limit (option)
     - [ ] receive token limit (option)
-    - [ ] templature (option)
+    - [x] temperature (option)
   - [ ] GPT-contextの導入し、chat_api.jsのグローバル変数(_chatapi_messages)を無くす
     - [ ] system ロールの別保持
     - [ ] user-important ロールを用意

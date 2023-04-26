@@ -75,10 +75,11 @@ function clearChatHistory(ctx) {
 * @description ctx.chat_messages に配列としてやりとりが蓄積される
 * @param {string} text - ユーザーからのテキスト
 * @param {object} ctx - GPTコンテキスト
+* @param {object} options - オプション(null可)。{ temperature: xxx } のみ有効
 * @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
 * @example postChatText('世界で一番高い山は？, ctx); // returns { role: 'assistant', content: 'エベレスト'}
 */
-async function postChatText(text, ctx) {
+async function postChatText(text, ctx, options) {
   const userMessage = {
     role: 'user',
     content: text,
@@ -98,7 +99,7 @@ async function postChatText(text, ctx) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletion(tempMessages, ctx.apiKey, ctx.model, ctx.url);
+  const response = await _chatCompletion(tempMessages, ctx.apiKey, ctx.model, ctx.url, options);
   _debugLog(response);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
@@ -123,10 +124,11 @@ async function postChatText(text, ctx) {
 * @param {string} text - ユーザーからのテキスト
 * @param {object} ctx - GPTコンテキスト
 * @param {function} chunkHander - ストリーミングでトークンを処理するハンドラ
+* @param {object} options - オプション(null可)。{ temperature: xxx } のみ有効
 * @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
 * @example streamChatText('世界で一番高い山は？, ctx, hunder); // returns { role: 'assistant', content: 'エベレスト'}
 */
-async function streamChatText(text, ctx, chunkHander) {
+async function streamChatText(text, ctx, chunkHander, options) {
   const userMessage = {
     role: 'user',
     content: text,
@@ -141,7 +143,7 @@ async function streamChatText(text, ctx, chunkHander) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletionStream(tempMessages, ctx.apiKey, ctx.model, ctx.url, chunkHander);
+  const response = await _chatCompletionStream(tempMessages, ctx.apiKey, ctx.model, ctx.url, chunkHander, options);
   _debugLog(response);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
@@ -223,19 +225,31 @@ function _buildHeaders(apiKey, url) {
   }
 }
 
+// bodyにオプションを反映する
+function _mergeOptions(body, options) {
+  // temperature
+  if (options?.temperature) {
+    body['temperature'] = options.temperature;
+  }
+}
+
+// Azure OpenAI API かどうかを判定する
 function isOnAzure(url) {
   return url.includes('openai.azure.com/openai/');
 }
 
 // chat API を呼び出す
-async function _chatCompletion(messages, apiKey, chatModel, url) {
+async function _chatCompletion(messages, apiKey, chatModel, url, options) {
   //const apiKey = API_KEY;
   //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
-  const body = JSON.stringify({
+  const bodyJson = {
     messages: messages,
     model: chatModel,
-  });
+  };
+  _mergeOptions(bodyJson, options);
+
+  const body = JSON.stringify(bodyJson);
   const headers = _buildHeaders(apiKey, url);
 
   const res = await fetch(url, {
@@ -283,14 +297,17 @@ async function _chatCompletion(messages, apiKey, chatModel, url) {
 
 // chat API を呼び出し、ストリーミングで応答を返す
 // 参考: https://zenn.dev/himanushi/articles/99579cf407c30b
-async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHander) {
+async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHander, options) {
   //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
-  const body = JSON.stringify({
+  const bodyJson = {
     messages: messages,
     model: chatModel,
-    stream: true // ここで stream を有効にする
-  });
+    stream: true, // ここで stream を有効にする
+  };
+  _mergeOptions(bodyJson, options);
+
+  const body = JSON.stringify(bodyJson);
   const headers = _buildHeaders(apiKey, url);
 
   const res = await fetch(url, {
