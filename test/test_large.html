@@ -128,6 +128,28 @@
       assert.strictEqual(response.role, 'error', "response is error");
       assert.strictEqual(ctx.chat_messages.length, len, "messages is not changed");
     });
+
+    // 初期化時にsystemMessageオプションを指定
+      QUnit.test("初期化時にsystemMessageオプションを指定、英語で答える", async function (assert) {
+      const ctx = initChat(API_KEY, { systemMessage: "You are helpful assistant. Reply in English." });
+      const len = ctx.chat_messages.length;
+      const response = await postChatText("富士山の高さを教えて", ctx);
+      assert.strictEqual(response.role, 'assistant', "response is assistant");
+      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "Mt. Fuji is 3776m");
+      assert.ok(response.content.includes('Mount Fuji') || response.content.includes('Mt. Fuji'), "about Mt. Fuji");
+      assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
+    });
+
+    // 初期化時にsendTokenLimitを指定
+    QUnit.test("初期化時にsendTokenLimitを指定", async function (assert) {
+      const question = '富士山の高さと、日本海溝の深さでは、どちらが大きい？'
+      const ctx0 = initChat(API_KEY);
+      const ctx1 = initChat(API_KEY, { sendTokenLimit: 17 + 6 });
+      const response0 = await postChatText(question, ctx0);
+      const response1 = await postChatText(question, ctx1);
+      assert.ok(response0.content.includes('日本海溝'), "通常の回答には、「日本海溝」が含まれる");
+      assert.notOk(response1.content.includes('日本海溝'), "長さ制限した場合には、「日本海溝」が含まれない");
+    });
   });
 
   QUnit.module("streamChatText", function () {

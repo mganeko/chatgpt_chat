@@ -56,19 +56,19 @@
     - [x] public 関数
     - [ ] 内部関数
   - [x] chat_api.jsの内部関数でグローバル定数を参照するのをやめる
-  - [ ] initChat()関数を用意、モデルやトークン上限を指定できるようにする
+  - [x] initChat()関数を用意、モデルやトークン上限を指定できるようにする
     - [x] API_KEYを渡す (must)
     - [x] contextを返す
     - [x] URL (option)
     - [x] model (option)
-    - [ ] system message (option)
+    - [x] system message (option)
+    - [x] send token limit (option)
     - [x] Azure (guess from url)
   - [ ] postChatText() / streamChatText() でオプション指定
-    - [ ] send token limit (option)
     - [ ] receive token limit (option)
     - [x] temperature (option)
   - [ ] GPT-contextの導入し、chat_api.jsのグローバル変数(_chatapi_messages)を無くす
-    - [ ] system ロールの別保持
+    - [-] system ロールの別保持
     - [ ] user-important ロールを用意
     - [ ] compactionアルゴリズムで、 systemロールとuser-importantロールをキープ
     - [x] postChatText()にcontextを渡す
@@ -76,6 +76,7 @@
     - [ ] _chatCompletion()でcontextを使う
     - [ ] _chatCompletionStream()でcontextを使う
     - [x] 履歴をクリアする clearChatHistory()
+    - [ ] 履歴を追加する addChatHistory(role, text)
 - [ ] テスト
   - [x] ユニットテスト
     - [x] 同期関数テスト

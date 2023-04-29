@@ -36,13 +36,20 @@
       assert.strictEqual(ctx.chat_messages[0].role, 'system', "messages[0].role === 'system'");
       assert.strictEqual(ctx.model, 'gpt-3.5-turbo', "model === 'gpt-3.5-turbo'");
       assert.strictEqual(ctx.url, 'https://api.openai.com/v1/chat/completions', "url === 'https://api.openai.com/v1/chat/completions'");
+      assert.strictEqual(ctx.sendTokenLimit, 3900, "sendTokenLimit === 3900");
     });
     QUnit.test("init with apiKey, options", function (assert) {
-      const ctx = initChat('thisIsKey', { model: 'monkeyModel', url: 'https://api.example.com' });
+      const ctx = initChat('thisIsKey', { model: 'monkeyModel',
+        url: 'https://api.example.com',
+        systemMessage: 'You are helpful assistant. Reply in English.',
+        sendTokenLimit: 100,
+      });
       assert.strictEqual(ctx.apiKey, 'thisIsKey', "apiKey === 'thisIsKey'");
       assert.strictEqual(ctx.chat_messages.length, 1, "messages len === 1");
       assert.strictEqual(ctx.chat_messages[0].role, 'system', "messages[0].role === 'system'");
+      assert.strictEqual(ctx.chat_messages[0].content, 'You are helpful assistant. Reply in English.', "messages[0].content === 'You are helpful assistant. Reply in English.'");
       assert.strictEqual(ctx.model, 'monkeyModel', "model === 'monkeyModel'");
+      assert.strictEqual(ctx.sendTokenLimit, 100, "sendTokenLimit === 100");
       assert.strictEqual(ctx.url, 'https://api.example.com', "url === 'https://api.example.com'");
     });
   });

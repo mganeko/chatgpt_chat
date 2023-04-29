@@ -8,7 +8,7 @@ const _debugMode = true; // true / false
 
 // ---- GPT-3.5 ----
 const _DEFAULT_CHAT_MODEL = "gpt-3.5-turbo";
-const _TOKEN_LIMIT = 3900;
+const _DEFAULT_TOKEN_LIMIT = 3900;
 //const _TOKEN_LIMIT = 1000; // for debug, cause ERROR
 
 // ---- GPT-4 ----
@@ -20,10 +20,10 @@ const _DEFAULT_CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
 
 // --- initial message ---
-// const _chatapi_messages = [{
-//   role: 'system',
-//   content: 'あなたは親切なアシスタントです',
-// }];
+const _DEFAULT_SYSTEM_MESSAGE = {
+  role: 'system',
+  content: 'あなたは親切なアシスタントです',
+};
 
 // ============== public function ==============
 
@@ -34,7 +34,7 @@ const _DEFAULT_CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 * Chatを初期化し、GPTコンテキストを返す
 * @description Chatを初期化、GPTコンテキストを返す
 * @param {string} apiKey - OpenAI APIのキー
-* @param {object} options - オプション, nullもOK. 例) { model: 'gpt-3.5-turbo', url: 'https://api.openai.com/v1/chat/completions' }
+* @param {object} options - オプション, nullもOK. 例) { model: 'gpt-3.5-turbo', url: 'https://api.openai.com/v1/chat/completions', systemMessage: "Reply in English.", sendTokenLimit: 3900 }
 * @returns {object} GPTコンテキスト
 * @example initChat('xxxxxxxxxx'); // returns gptContext
 */
@@ -95,7 +95,7 @@ async function postChatText(text, ctx, options) {
   tempMessages.push(userMessage);
 
   // -- compaction --
-  _messageCompaction(tempMessages, _TOKEN_LIMIT);
+  _messageCompaction(tempMessages, ctx.sendTokenLimit);
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
@@ -139,7 +139,7 @@ async function streamChatText(text, ctx, chunkHander, options) {
   tempMessages.push(userMessage);
 
   // -- compaction --
-  _messageCompaction(tempMessages, _TOKEN_LIMIT);
+  _messageCompaction(tempMessages, ctx.sendTokenLimit);
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
@@ -177,12 +177,14 @@ function _debugLog(...args) {
 // ============= inner function ============
 
 // GPTコンテキストを初期化する
+// options: { model: xxx, url: xxx, systemMessage: xxx, sendTokenLimit: xxx }
 function _initGptContext(apiKey, options) {
-  const defaultMessage = _getDefaultMessage();
+  const defaultMessage = _getInitialMessage(options?.systemMessage);
   const gptCtx = {
     apiKey: apiKey,
     model: options?.model ?? _DEFAULT_CHAT_MODEL,
     url: options?.url ?? _DEFAULT_CHATAPI_URL,
+    sendTokenLimit: options?.sendTokenLimit ?? _DEFAULT_TOKEN_LIMIT,
     // options: {
     //   model: options.model ?? _CHAT_MODEL,
     //   sendTokenLimit: options.sendTokenLimit ?? _TOKEN_LIMIT,
@@ -196,12 +198,20 @@ function _initGptContext(apiKey, options) {
   return gptCtx;
 }
 
-// デフォルトのメッセージ履歴を用意する
-function _getDefaultMessage() {
-  const messages = [{
-    role: 'system',
-    content: 'あなたは親切なアシスタントです',
-  }];
+// 初期値のメッセージ履歴を用意する
+function _getInitialMessage(sytemMessage) {
+  const messages = [];
+
+  if (sytemMessage) {
+    messages.push({
+      role: 'system',
+      content: sytemMessage,
+    });
+  }
+  else {
+    messages.push(_DEFAULT_SYSTEM_MESSAGE);
+  }
+
   return messages;
 }
 
@@ -467,7 +477,7 @@ function _removeMessage(messages, tokenLimit) {
   }
 }
 
-// 過去のメッセージ全体のトークンサイズを計算する
+// 過去のメッセージ全体のトークンサイズを計算する（文字数による近似）
 function _calcTokenSize(messages) {
   let totalSize = 0;
   messages.forEach(message => {
@@ -476,12 +486,12 @@ function _calcTokenSize(messages) {
   return totalSize;
 }
 
-// メッセージ単体のトークンサイズを計算する
+// メッセージ単体のトークンサイズを計算する（文字数による近似）
 function _calcSingleMessageToken(message) {
   return message.content.length;
 }
 
-// メッセージ単体を短くする
+// メッセージ単体を短くする（文字数による近似）
 function _shortenMessage(message, tokenLimit) {
   const content = message.content;
   message.content = content.substring(0, tokenLimit);
