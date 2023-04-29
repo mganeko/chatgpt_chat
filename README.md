@@ -11,10 +11,16 @@
   - API_KEYの値を、発行したAPIキーに書き換え
   - HEADER_ELEMENTの値を変更すると、ヘッダー部分の要素をカスタマイズ可能
 - ブラウザーからアクセス
-  - サーバーのURL/index.html （通常）
-  - サーバーのURL/stream.html （ストリーミングモードを利用）
+  - サーバーのURL/index.html （通常/ストリームモード両用）
+- テスト
+  - サーバーのURL/test/test_small.html （通信なしのテスト）
+  - サーバーのURL/test/test_large.html （通信を含むテスト）
 
-
+## APIラッパー (js/chat_api.js)
+- const ctx = initChat(apiKey, options); // 初期化
+- async function postChatText(text, ctx, options); // チャットメッセージを送信し、応答を返す
+- async function streamChatText(text, ctx, chunkHander, options); // チャットメッセージを送信し、ストリーミングで応答を返す
+  - chunkHander:  function (tokenText) => {}; 
 
 ## ライセンス/Lisence
 
