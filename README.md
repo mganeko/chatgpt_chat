@@ -55,6 +55,7 @@
   - [ ] jsdocに従ったコメントにする
     - [x] public 関数
     - [ ] 内部関数
+  - [ ] _debugLog() 出力を、config.jsの値で切り替える
   - [x] chat_api.jsの内部関数でグローバル定数を参照するのをやめる
   - [x] initChat()関数を用意、モデルやトークン上限を指定できるようにする
     - [x] API_KEYを渡す (must)
@@ -67,7 +68,7 @@
   - [ ] postChatText() / streamChatText() でオプション指定
     - [ ] receive token limit (option)
     - [x] temperature (option)
-  - [ ] GPT-contextの導入し、chat_api.jsのグローバル変数(_chatapi_messages)を無くす
+  - [x] GPT-contextの導入し、chat_api.jsのグローバル変数(_chatapi_messages)を無くす
     - [-] system ロールの別保持
     - [ ] user-important ロールを用意
     - [ ] compactionアルゴリズムで、 systemロールとuser-importantロールをキープ
@@ -76,13 +77,13 @@
     - [ ] _chatCompletion()でcontextを使う
     - [ ] _chatCompletionStream()でcontextを使う
     - [x] 履歴をクリアする clearChatHistory()
-    - [ ] 履歴を追加する addChatHistory(role, text)
-- [ ] テスト
+    - [x] 履歴を追加する addChatHistory()
+- [x] テスト
   - [x] ユニットテスト
     - [x] 同期関数テスト
     - [x] 非同期関数テスト
     - [x] ストリーミングテスト
-  - [ ] E2E テスト
+  - [-] E2E テスト
 
 
 

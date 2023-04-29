@@ -36,7 +36,7 @@ const _DEFAULT_SYSTEM_MESSAGE = {
 * @param {string} apiKey - OpenAI APIのキー
 * @param {object} options - オプション, nullもOK. 例) { model: 'gpt-3.5-turbo', url: 'https://api.openai.com/v1/chat/completions', systemMessage: "Reply in English.", sendTokenLimit: 3900 }
 * @returns {object} GPTコンテキスト
-* @example initChat('xxxxxxxxxx'); // returns gptContext
+* @example initChat('xxxxxxxxxx', { model: 'xxxxx'}); // returns gptContext
 */
 function initChat(apiKey, options = null) {
   const gptCtx = _initGptContext(apiKey, options);
@@ -65,6 +65,25 @@ function clearChatHistory(ctx) {
     // 全て削除する
     ctx.chat_messages.splice(0);
   }
+}
+
+/*
+ * チャットの履歴を追加する
+ */
+/**
+* GPTコンテキストにチャット履歴を追加する
+* @description GPTコンテキストにチャット履歴を追加する
+* @param {object} ctx - GPTコンテキスト
+* @param {string} role - ロール。'user' / 'assistant' のいずれか
+* @param {string} text - テキスト
+* @returns  void
+* @example addChatHistory(ctx, 'user', 'よく眠れる方法は？'); // returns nothing
+*/
+function addChatHistory(ctx, role, text) {
+  if ((!ctx) || (!ctx.chat_messages)) 
+    return;
+
+  ctx.chat_messages.push({ role: role, content: text });
 }
 
 /*
