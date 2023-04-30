@@ -1,3 +1,9 @@
 js/config.js
 .DS_Store
 stock
+
+# ignore node.js runtime files
+for_nodejs/package.json
+for_nodejs/package-lock.json
+for_nodejs/node_modules
+for_nodejs/chat_api_cjs.js
