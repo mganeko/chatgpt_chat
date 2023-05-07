@@ -52,12 +52,21 @@
   </div>
   <div id="input_form" class="input_form">
     user:<br />
-    <form name="user_text" onsubmit="sendText(); return false">
+    <form name="user_text" id="user_text_form" onsubmit="sendText(); return false">
       <textarea type="text" id="user_text" cols="60" rows="5" tabindex="1" onkeydown="handleKeyDown()"></textarea>
       <input type="submit" tabindex="2" />
       <br />
       <span style="font-size: smaller;">
-      <input type="checkbox" id="use_stream" checked >ストリーム応答</input>
+        <input type="checkbox" id="use_stream" checked >ストリーム応答</input>
+        &nbsp;
+        &nbsp;
+        &nbsp;
+        <!-- temperature -->
+        <input type="radio" name="temperature" id="tempr_0" >堅実(0.0)</input>
+        <input type="radio" name="temperature" id="tempr_1" checked="1">普通(0.7)</input>
+        <input type="radio" name="temperature" id="tempr_2" >柔軟(1.0)</input>
+        <input type="radio" name="temperature" id="tempr_3">自由奔放(1.4)</input>
+        <!-- temperature -->
       </span>
     </form>
   </div>
@@ -73,11 +82,16 @@
   const divWaitStreaming = document.getElementById('wait_streaming_div');
   const divInput = document.getElementById('input_form');
   const useStreamCheck = document.getElementById('use_stream');
+  //const userForm = document.getElementById('user_text_form');
 
   // ==== UI functions ====
   // ユーザーの入力をAPIに送り、応答を表示するまでの処理の全体
   async function sendText() {
     const apiKey = API_KEY;
+    const options = {
+      temperature: getTemperature(),
+    };
+    console.log("options:", options);
 
     const text = userText.value;
     addUserText(text);
@@ -90,12 +104,12 @@
         const response = await streamChatText(text, gptCtx, (x) => {
           //console.log('stream:', x);
           divWaitStreaming.innerHTML += x;
-        });
+        }, options);
         addResponseText(response.content);
       }
       else {
         // 通常モード
-        const response = await postChatText(text, gptCtx);
+        const response = await postChatText(text, gptCtx, options);
         addResponseText(response.content);
       }
     }
@@ -121,8 +135,8 @@
     const div = document.createElement('div');
     div.className = 'user_text';
     //div.innerHTML = 'user:' + marked.parse(text, { gfm: false });
-    div.innerHTML = 'user:' + marked.parse(text.replace(/(\n)/g, '  \n'), { gfm: false }); // OK
-    //div.innerHTML = 'user:' + marked.parse(text.replace(/[^\s\n]+\n/g, '  \n'), { gfm: false }); // NG
+    //div.innerHTML = 'user:' + marked.parse(text.replace(/(\n)/g, '  \n'), { gfm: false }); // OK
+    div.innerHTML = 'user:' + marked.parse(text.replace(/(\n)/g, '  \n')); // OK
     divChatHistory.insertBefore(div, divWaiting);
     scrollToBottom();
   }
@@ -133,7 +147,8 @@
     const div = document.createElement('div');
     div.className = 'ai_text';
     //div.innerHTML = 'AI:' + marked.parse(text, { gfm: false });
-    div.innerHTML = 'AI:' + marked.parse(text.replace(/(\n)/g, '  \n'), { gfm: false });
+    //div.innerHTML = 'AI:' + marked.parse(text.replace(/(\n)/g, '  \n'), { gfm: false });
+    div.innerHTML = 'AI:' + marked.parse(text.replace(/(\n)/g, '  \n'));
     divChatHistory.insertBefore(div, divWaiting);
     scrollToBottom();
   }
@@ -164,6 +179,25 @@
       top: elementPosition,
       behavior: 'smooth'
     });
+  }
+
+  // temperatureの値を取得する
+  function getTemperature() {
+    let temperature = 0.7;
+    if (document.getElementById('tempr_0').checked) {
+      temperature = 0.0;
+    }
+    else if (document.getElementById('tempr_1').checked) {
+      temperature = 0.7;
+    }
+    else if (document.getElementById('tempr_2').checked) {
+      temperature = 1.0;
+    }
+    else if (document.getElementById('tempr_3').checked) {
+      temperature = 1.4;
+    }
+  
+    return temperature;
   }
 
   // --- init header element ---
