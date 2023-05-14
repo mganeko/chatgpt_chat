@@ -9,6 +9,7 @@ const _debugMode = true; // true / false
 // ---- GPT-3.5 ----
 const _DEFAULT_CHAT_MODEL = "gpt-3.5-turbo";
 const _DEFAULT_TOKEN_LIMIT = 3900;
+const _MAX_TOKEN_LIMIT = _DEFAULT_TOKEN_LIMIT - 1000;
 //const _TOKEN_LIMIT = 1000; // for debug, cause ERROR
 
 // ---- GPT-4 ----
@@ -259,6 +260,15 @@ function _mergeOptions(body, options) {
   // temperature
   if (options?.temperature) {
     body['temperature'] = options.temperature;
+  }
+
+  // max_tokens
+  if (options?.max_tokens) {
+    const max_tokens = options.max_tokens;
+    if (max_tokens> _MAX_TOKEN_LIMIT) {
+      throw(`max_tokens(${max_tokens}) is over the limit(${_MAX_TOKEN_LIMIT}).`);
+    }
+    body['max_tokens'] = options.max_tokens;
   }
 }
 

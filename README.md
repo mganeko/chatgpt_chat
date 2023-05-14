@@ -47,9 +47,13 @@
   - [x] AI回答があったときの、自動スクロール
   - [x] ストリーミング対応 (stream.html)
   - [x] preタグを試す(Not Good.不採用)
+  - [ ] max_tokensを2段階に切り替える
 - [ ] トークン数を返す、表示する
 - [ ] バグ修正
   - [x] 1つの入力が長い（limit以上）の場合に短縮するロジックのバグを修正
+  - [ ] token数の調整。生成結果(completion)の max_tokensと、元のメッセージの長さの合計が、上限以内にする必要がある
+    - "This model's maximum context length is 4097 tokens. However, you requested 4620 tokens (620 in the messages, 4000 in the completion). Please reduce the length of the messages or completion.",
+"type": "invalid_request_error",
 - [ ] userメッセージの送信後にエラーが返ってきた場合
   - [x] 一律なエラーメッセージ表示（ネットワークエラー）
   - [x] エラーはassistantでなく、errorロールを作成
@@ -71,8 +75,8 @@
     - [x] system message (option)
     - [x] send token limit (option)
     - [x] Azure (guess from url)
-  - [ ] postChatText() / streamChatText() でオプション指定
-    - [ ] receive token limit (option)
+  - [x] postChatText() / streamChatText() でオプション指定
+    - [x] max_tokens (max generated tokens) (option)
     - [x] temperature (option)
   - [x] GPT-contextの導入し、chat_api.jsのグローバル変数(_chatapi_messages)を無くす
     - [-] system ロールの別保持

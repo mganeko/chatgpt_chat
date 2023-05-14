@@ -224,80 +224,21 @@
       _mergeOptions(body, { temperature: 0.5 });
       assert.strictEqual(body.temperature, 0.5, "temperature is merged");
     });
-  });
 
-
-  /*---- large test -----
-  QUnit.module("_chatCompletion", function () {
-    const MODEL = "gpt-3.5-turbo";
-    const message0 = { role: 'system', content: 'あなたは親切なアシスタントです' };
-    const message1 = { role: 'user', content: '富士山の高さを数字だけで答えて' };
-    const messages = [message0, message1];
-
-    QUnit.test("APIキーが間違っていたらエラーが返る", async function (assert) {
-      const response = await _chatCompletion(messages, "dummy-key", MODEL);
-      assert.strictEqual(response.role, 'error', "response is error");
+    QUnit.test("適切なサイズのmax_tokensオプションはマージされる", function (assert) {
+      const body = { model: 'monekyModel'};
+      _mergeOptions(body, { max_tokens: 1000 });
+      assert.strictEqual(body.max_tokens, 1000, "max_tokens is merged");
     });
 
-    QUnit.test("正しいAPIキーで、答えが返る", async function (assert) {
-      const response = await _chatCompletion(messages, API_KEY, MODEL);
-      assert.strictEqual(response.role, 'assistant', "response is assistant");
-      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+    QUnit.test("巨大なサイズのmax_tokensオプションは例外発生", function (assert) {
+      const body = { model: 'monekyModel'};
+      assert.throws(() => {
+        _mergeOptions(body, { max_tokens: 10000 });
+      }, "max_tokens is too large");
     });
   });
 
-  QUnit.module("_chatCompletionStream", function () {
-    const MODEL = "gpt-3.5-turbo";
-    const message0 = { role: 'system', content: 'あなたは親切なアシスタントです' };
-    const message1 = { role: 'user', content: '富士山の高さを数字だけで答えて' };
-    const messages = [message0, message1];
-    let streamText = '';
-    function handleSteam(text) {
-      streamText += text;
-    }
-
-    QUnit.test("ストリーミングの蓄積と、最終の答えが一致する", async function (assert) {
-      const response = await _chatCompletionStream(messages, API_KEY, MODEL, handleSteam);
-      assert.strictEqual(response.role, 'assistant', "response is assistant");
-      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
-      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
-    });
-  });
-
-  QUnit.module("postChatText/streamChatText", function () {
-    // メッセージの蓄積は増えない
-    QUnit.test("APIキーが間違っていたらエラーが返る。メッセージは増えない", async function (assert) {
-      const len = _chatapi_messages.length;
-      const response = await postChatText("富士山の高さを数字だけで答えて", "dummy-key");
-      assert.strictEqual(response.role, 'error', "response is error");
-      assert.strictEqual(_chatapi_messages.length, len, "messages is not changed");
-    });
-
-    // メッセージの蓄積が増える
-    QUnit.test("正しいAPIキーで、答えが返る。メッセージが2個増える", async function (assert) {
-      const len = _chatapi_messages.length;
-      const response = await postChatText("富士山の高さを数字だけで答えて", API_KEY);
-      assert.strictEqual(response.role, 'assistant', "response is assistant");
-      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
-      assert.strictEqual(_chatapi_messages.length, len + 2, "messages is changed");
-    });
-
-    // ストリーミングでもメッセージの蓄積が増える
-    QUnit.test("ストリーミングの蓄積と、最終の答えが一致する。メッセージが2個増える", async function (assert) {
-      let streamText = '';
-      function handleSteam(text) {
-        streamText += text;
-      }
-
-      const len = _chatapi_messages.length;
-      const response = await streamChatText("富士山の高さを数字だけで答えて", API_KEY, handleSteam);
-      assert.strictEqual(response.role, 'assistant', "response is assistant");
-      assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
-      assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
-      assert.strictEqual(_chatapi_messages.length, len + 2, "messages is changed");
-    });
-  });
-  --- large test ----*/
 </script>
 
 </html>
