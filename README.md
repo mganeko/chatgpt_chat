@@ -72,6 +72,8 @@
     - [x] contextを返す
     - [x] URL (option)
     - [x] model (option)
+    - [ ] model - gpt3.5-burbo-16k, config.js
+    - [ ] URL config.js
     - [x] system message (option)
     - [x] send token limit (option)
     - [x] Azure (guess from url)
