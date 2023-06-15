@@ -57,14 +57,14 @@
       <input type="submit" tabindex="2" />
       <br />
       <span style="font-size: smaller;">
-        <input type="checkbox" id="use_stream" checked >ストリーム応答</input>
+        <input type="checkbox" id="use_stream" checked>ストリーム応答</input>
         &nbsp;
         &nbsp;
         &nbsp;
         <!-- temperature -->
-        <input type="radio" name="temperature" id="tempr_0" >堅実(0.0)</input>
+        <input type="radio" name="temperature" id="tempr_0">堅実(0.0)</input>
         <input type="radio" name="temperature" id="tempr_1" checked="1">普通(0.7)</input>
-        <input type="radio" name="temperature" id="tempr_2" >柔軟(1.0)</input>
+        <input type="radio" name="temperature" id="tempr_2">柔軟(1.0)</input>
         <input type="radio" name="temperature" id="tempr_3">自由奔放(1.4)</input>
         <!-- temperature -->
       </span>
@@ -197,8 +197,21 @@
     else if (document.getElementById('tempr_3').checked) {
       temperature = 1.4;
     }
-  
+
     return temperature;
+  }
+
+  // --- initalize option ---
+  function buildInitOptions() {
+    const options = {};
+    if (API_URL && API_URL.length > 0) {
+      options.url = API_URL;
+    }
+    if (MODEL_NAME && MODEL_NAME.length > 0) {
+      options.model = MODEL_NAME;
+    }
+
+    return options;
   }
 
   // --- init header element ---
@@ -210,8 +223,9 @@
   insertHeader();
 
   // --- init Gpt context ---
-  gptCtx = initChat(API_KEY); // Chatを初期化し、GPTコンテキストを保持する
-  
+  const options = buildInitOptions();
+  gptCtx = initChat(API_KEY, options); // Chatを初期化し、GPTコンテキストを保持する
+
 </script>
 
 </html>
