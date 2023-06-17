@@ -9,6 +9,11 @@
 // --- OpenAI Key ---
 const API_KEY = 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
+// --- options ----
+const API_URL = '';
+const MODEL_NAME = ''; // gpt-3.5-turbo-16k';
+//const SEND_TOKEN_LIMIT = 3900; //10000;
+
 // --- header element ---
 const HEADER_ELEMENT = 'Simple Chat using ChatGPT API<br />Type any text, and click [submit] button';
 //const HEADER_ELEMENT = '';
