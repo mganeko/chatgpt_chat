@@ -210,6 +210,9 @@
     if (MODEL_NAME && MODEL_NAME.length > 0) {
       options.model = MODEL_NAME;
     }
+    if (SEND_TOKEN_LIMIT && SEND_TOKEN_LIMIT > 0) {
+      options.sendTokenLimt = SEND_TOKEN_LIMIT;
+    }
 
     return options;
   }
@@ -224,6 +227,7 @@
 
   // --- init Gpt context ---
   const options = buildInitOptions();
+  //console.log('option for INIT:', options)
   gptCtx = initChat(API_KEY, options); // Chatを初期化し、GPTコンテキストを保持する
 
 </script>
