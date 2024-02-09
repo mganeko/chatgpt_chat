@@ -150,8 +150,8 @@
     });
 
     // 初期化時にsystemMessageオプションを指定
-      QUnit.test("初期化時にsystemMessageオプションを指定、英語で答える", async function (assert) {
-      const ctx = initChat(API_KEY, { systemMessage: "You are helpful assistant. Reply in English." });
+    QUnit.test("初期化時にsystemMessageオプションを指定、英語で答える", async function (assert) {
+      const ctx = initChat(API_KEY, { systemMessage: "You are helpful assistant. Reply in English. DO NOT use Japanese." });
       const len = ctx.chat_messages.length;
       const response = await postChatText("富士山の高さを教えて", ctx);
       assert.strictEqual(response.role, 'assistant', "response is assistant");
