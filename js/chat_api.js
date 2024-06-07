@@ -35,7 +35,7 @@ const _DEFAULT_SYSTEM_MESSAGE = {
 * Chatを初期化し、GPTコンテキストを返す
 * @description Chatを初期化、GPTコンテキストを返す
 * @param {string} apiKey - OpenAI APIのキー
-* @param {object} options - オプション, nullもOK. 例) { model: 'gpt-3.5-turbo', url: 'https://api.openai.com/v1/chat/completions', systemMessage: "Reply in English.", sendTokenLimit: 3900 }
+* @param {object} options - オプション, nullもOK. 例) { model: 'gpt-3.5-turbo', url: 'https://api.openai.com/v1/chat/completions', systemMessage: "Reply in English.", sendTokenLimit: 3900, apiMode: "ollama" } // apiMode: "openai"(default) | "ollama"
 * @returns {object} GPTコンテキスト
 * @example initChat('xxxxxxxxxx', { model: 'xxxxx'}); // returns gptContext
 */
@@ -119,7 +119,13 @@ async function postChatText(text, ctx, options) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletion(tempMessages, ctx.apiKey, ctx.model, ctx.url, options);
+  let response;
+  if (ctx.apiMode === 'ollama') {
+    response = await _ollamaChatCompletion(tempMessages, ctx.apiKey, ctx.model, ctx.url, options);
+  }
+  else {
+    response = await _chatCompletion(tempMessages, ctx.apiKey, ctx.model, ctx.url, options);
+  }
   _debugLog(response);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
@@ -205,6 +211,7 @@ function _initGptContext(apiKey, options) {
     model: options?.model ?? _DEFAULT_CHAT_MODEL,
     url: options?.url ?? _DEFAULT_CHATAPI_URL,
     sendTokenLimit: options?.sendTokenLimit ?? _DEFAULT_TOKEN_LIMIT,
+    apiMode: options?.apiMode ?? 'openai',
     // options: {
     //   model: options.model ?? _CHAT_MODEL,
     //   sendTokenLimit: options.sendTokenLimit ?? _TOKEN_LIMIT,
@@ -305,7 +312,7 @@ async function _chatCompletion(messages, apiKey, chatModel, url, options) {
   if (res?.role === 'error') {
     return res;
   }
-
+  
   // エラー判定
   if (!res.ok) {
     const responseText = await res.text();
@@ -317,7 +324,13 @@ async function _chatCompletion(messages, apiKey, chatModel, url, options) {
   }
 
   // 応答を解析
-  const data = await res.json();
+  const data = await res.json().catch(err => {
+    _debugLog(err);
+    return {
+      role: 'error',
+      content: 'Result Parse Erorr, Plase try again.',
+    };
+  });
   _debugLog(data);
   //_debugLog(data.usage);
 
@@ -333,6 +346,83 @@ async function _chatCompletion(messages, apiKey, chatModel, url, options) {
     };
   }
 };
+
+// Ollama形式のchat API を呼び出す
+async function _ollamaChatCompletion(messages, apiKey, chatModel, url, options) {
+  //const apiKey = API_KEY;
+  //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
+
+  const bodyJson = {
+    messages: messages,
+    model: chatModel,
+  };
+  _mergeOptions(bodyJson, options);
+
+  const body = JSON.stringify(bodyJson);
+  const headers = _buildHeaders(apiKey, url);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: headers,
+    body,
+  }).catch(e => {
+    console.error(e);
+    return {
+      role: 'error',
+      content: 'Network ERROR, Plase try again.',
+    };
+  });
+  if (res?.role === 'error') {
+    return res;
+  }
+
+
+  // エラー判定
+  if (!res.ok) {
+    const responseText = await res.text();
+    _debugLog(res, responseText);
+    return {
+      role: 'error',
+      content: 'Server Error:' + res.status + '. ' + responseText,
+    };
+  }
+
+  // 複数の応答を解析
+  const responseText = await res.text();
+  const resultMessage = await _buildResponseFromMultiLineString(responseText);
+  return resultMessage;
+};
+
+// Ollama形式の、複数業文字列から応答を組み立てる
+function _buildResponseFromMultiLineString(text) {
+  const lines = text.split('\n');
+  _debugLog(lines);
+
+  let contentText = "";
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.length > 0) {
+      try {
+        const json = JSON.parse(line);
+        if (json?.message?.content) {
+          contentText += json.message.content;
+        }
+        if (json?.done) {
+          break;
+        }
+      }
+      catch (err) {
+        _debugLog('line parse error:', err);
+      }
+    }
+  };
+  //_debugLog('contentText:', contentText);
+
+  return {
+    role: 'assistant',
+    content: contentText,
+  };
+}
 
 // chat API を呼び出し、ストリーミングで応答を返す
 // 参考: https://zenn.dev/himanushi/articles/99579cf407c30b
@@ -398,6 +488,11 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
       // これは Event stream format と呼ばれる形式
       // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format
       //console.log(chunk);
+
+      // ====※Ollamaの場合、chuckに複数行のテキスト（JSON）が格納されているため、それを解析する====
+      // TODO: この部分を適切に解析して、最終的な結果を取得する
+      // つまり、streaming にはなっていない
+
 
       const jsons = chunk
         .split('data:') // 複数格納されていることもあるため split する

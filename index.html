@@ -213,6 +213,9 @@
     if (SEND_TOKEN_LIMIT && SEND_TOKEN_LIMIT > 0) {
       options.sendTokenLimt = SEND_TOKEN_LIMIT;
     }
+    if (API_MODE && API_MODE.length > 0) {
+      options.apiMode = API_MODE;
+    }
 
     return options;
   }
