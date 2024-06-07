@@ -299,6 +299,18 @@
         assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
         assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
       });
+
+      QUnit.test("ストリーミングはサポートしない。エラーが返る", async function (assert) {
+        let streamText = '';
+        function handleSteam(text) {
+          streamText += text;
+        }
+
+        const ctx = initChat("no-key-for-ollama", { url: TEST_OLLAMA_API_URL, apiMode: "ollama", model: TEST_OLLAMA_MDOEL_NAME });
+        const response = await streamChatText("富士山の高さを数字だけで答えて。カンマ無しで", ctx, handleSteam);
+        assert.strictEqual(response.role, 'error', "response is error");
+        assert.strictEqual(streamText, '', "text is empty");
+      });
     }
     else {
       QUnit.test("Ollama APIのテスト。設定によりスキップ", async function (assert) {

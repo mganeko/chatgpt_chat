@@ -160,6 +160,12 @@ async function streamChatText(text, ctx, chunkHander, options) {
     content: text,
   };
 
+  // ==== check API mode ===
+  if (ctx.apiMode === 'ollama') {
+    _debugLog('streaming is not supported in ollama API mode.');
+    return { role: 'error', content: 'streaming is not supported in ollama API mode.' };
+  }
+
   // ==== 一時的メッセージ配列を作る ===
   const tempMessages = Array.from(ctx.chat_messages);
   tempMessages.push(userMessage);
