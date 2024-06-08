@@ -292,9 +292,46 @@ function isOnAzure(url) {
 
 // chat API を呼び出す
 async function _chatCompletion(messages, apiKey, chatModel, url, options) {
-  //const apiKey = API_KEY;
-  //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
+  // Chat APIにリクエストを送信する
+  const packedMessage = await _sendRequestToChatAPI(messages, apiKey, chatModel, url, options);
+  if (packedMessage.role === 'error') {
+    return packedMessage;
+  }
+  const res = packedMessage.response;
 
+  // 応答を解析
+  const data = await res.json().catch(err => {
+    _debugLog(err);
+    return {
+      role: 'error',
+      content: 'Result Parse Erorr, Please try again.',
+    };
+  });
+  _debugLog(data);
+  //_debugLog(data.usage);
+
+  // データ（JSON）から応答を組み立てる
+  const message = _buildMessageFromChoice(data);
+  return message;
+};
+
+// データ（JSON）から応答を組み立てる
+function _buildMessageFromChoice(data) {
+  const choiceIndex = 0;
+  const choices = data?.choices;
+  if (choices) {
+    return choices[choiceIndex]?.message ?? { role: 'error', content: 'Response Empty' };
+  }
+  else {
+    return {
+      role: 'error',
+      content: 'Sever Erorr, Please try again.',
+    };
+  }
+}
+
+// Chat APIにリクエストを送信する
+async function _sendRequestToChatAPI(messages, apiKey, chatModel, url, options) {
   const bodyJson = {
     messages: messages,
     model: chatModel,
@@ -312,7 +349,7 @@ async function _chatCompletion(messages, apiKey, chatModel, url, options) {
     console.error(e);
     return {
       role: 'error',
-      content: 'Network ERROR, Plase try again.',
+      content: 'Network ERROR, Please try again.',
     };
   });
   if (res?.role === 'error') {
@@ -329,35 +366,19 @@ async function _chatCompletion(messages, apiKey, chatModel, url, options) {
     };
   }
 
-  // 応答を解析
-  const data = await res.json().catch(err => {
-    _debugLog(err);
-    return {
-      role: 'error',
-      content: 'Result Parse Erorr, Plase try again.',
-    };
-  });
-  _debugLog(data);
-  //_debugLog(data.usage);
-
-  const choiceIndex = 0;
-  const choices = data?.choices;
-  if (choices) {
-    return choices[choiceIndex]?.message ?? { role: 'error', content: 'Response Empty' };
+  // 結果をパックして返す
+  return {
+    role: 'response',
+    response: res,
   }
-  else {
-    return {
-      role: 'error',
-      content: 'Sever Erorr, Plase try again.',
-    };
-  }
-};
+}
 
 // Ollama形式のchat API を呼び出す
 async function _ollamaChatCompletion(messages, apiKey, chatModel, url, options) {
   //const apiKey = API_KEY;
   //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
 
+  /*--
   const bodyJson = {
     messages: messages,
     model: chatModel,
@@ -375,7 +396,7 @@ async function _ollamaChatCompletion(messages, apiKey, chatModel, url, options) 
     console.error(e);
     return {
       role: 'error',
-      content: 'Network ERROR, Plase try again.',
+      content: 'Network ERROR, Please try again.',
     };
   });
   if (res?.role === 'error') {
@@ -392,15 +413,23 @@ async function _ollamaChatCompletion(messages, apiKey, chatModel, url, options) 
       content: 'Server Error:' + res.status + '. ' + responseText,
     };
   }
+  ---*/
+
+  // Chat APIにリクエストを送信する
+  const packedMessage = await _sendRequestToChatAPI(messages, apiKey, chatModel, url, options);
+  if (packedMessage.role === 'error') {
+    return packedMessage;
+  }
+  const res = packedMessage.response;
 
   // 複数の応答を解析
   const responseText = await res.text();
-  const resultMessage = await _buildResponseFromMultiLineString(responseText);
+  const resultMessage = await _buildMessageFromMultiLineString(responseText);
   return resultMessage;
 };
 
 // Ollama形式の、複数業文字列から応答を組み立てる
-function _buildResponseFromMultiLineString(text) {
+function _buildMessageFromMultiLineString(text) {
   const lines = text.split('\n');
   _debugLog(lines);
 
@@ -453,7 +482,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
     console.error(e);
     return {
       role: 'error',
-      content: 'Network ERROR, Plase try again.',
+      content: 'Network ERROR, Please try again.',
     };
   });
   if (res?.role === 'error') {
