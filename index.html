@@ -213,6 +213,9 @@
     if (SEND_TOKEN_LIMIT && SEND_TOKEN_LIMIT > 0) {
       options.sendTokenLimt = SEND_TOKEN_LIMIT;
     }
+    if (API_MODE && API_MODE.length > 0) {
+      options.apiMode = API_MODE;
+    }
 
     return options;
   }
@@ -225,10 +228,21 @@
   }
   insertHeader();
 
+  function setupUI(options) {
+    if (options?.apiMode === 'ollama') {
+      // Ollamaモードの場合、ストリーム応答は利用しない
+      useStreamCheck.checked = false;
+      useStreamCheck.disabled = true;
+    }
+  }
+
   // --- init Gpt context ---
   const options = buildInitOptions();
   //console.log('option for INIT:', options)
   gptCtx = initChat(API_KEY, options); // Chatを初期化し、GPTコンテキストを保持する
+
+  // --- setup UI ---
+  setupUI(options);
 
 </script>
 

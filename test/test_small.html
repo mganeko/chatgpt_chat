@@ -239,6 +239,24 @@
     });
   });
 
+  // --- Olama APIのテスト ----
+  QUnit.module("for Ollama", function () {
+    QUnit.test("複数行の結果のパーステスト", function (assert) {
+      const responseText =
+`{"model":"elyza7b","created_at":"2024-06-07T00:06:12.136467Z","message":{"role":"assistant","content":" The"},"done":false}
+{"model":"elyza7b","created_at":"2024-06-07T00:06:12.277387Z","message":{"role":"assistant","content":" sky"},"done":false}
+{"model":"elyza7b","created_at":"2024-06-07T00:06:12.422129Z","message":{"role":"assistant","content":" is"},"done":false}
+{"model":"elyza7b","created_at":"2024-06-07T00:06:12.422129Z","message":{"role":"assistant","content":" bule."},"done":false}
+{"model":"elyza7b","created_at":"2024-06-07T00:06:12.422129Z","done":true}
+{"model":"elyza7b","created_at":"2024-06-07T00:06:12.422129Z","message":{"role":"assistant","content":" EXTRA_NOT_INCLUDE"},"done":false}`;
+
+      const result = _buildResponseFromMultiLineString(responseText);
+      assert.strictEqual(result.role, "assistant", "role is assistant");
+      const expected = ' The sky is bule.';
+      assert.strictEqual(result.content, expected, "content is: The sky is bule.");
+    });
+  });
+
 </script>
 
 </html>
