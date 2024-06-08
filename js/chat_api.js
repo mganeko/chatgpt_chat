@@ -293,7 +293,8 @@ function isOnAzure(url) {
 // chat API を呼び出す
 async function _chatCompletion(messages, apiKey, chatModel, url, options) {
   // Chat APIにリクエストを送信する
-  const packedMessage = await _sendRequestToChatAPI(messages, apiKey, chatModel, url, options);
+  const streamFlag = false
+  const packedMessage = await _sendRequestToChatAPI(messages, apiKey, chatModel, url, streamFlag, options);
   if (packedMessage.role === 'error') {
     return packedMessage;
   }
@@ -331,10 +332,11 @@ function _buildMessageFromChoice(data) {
 }
 
 // Chat APIにリクエストを送信する
-async function _sendRequestToChatAPI(messages, apiKey, chatModel, url, options) {
+async function _sendRequestToChatAPI(messages, apiKey, chatModel, url, streamFlag, options) {
   const bodyJson = {
     messages: messages,
     model: chatModel,
+    stream: streamFlag ?? false,
   };
   _mergeOptions(bodyJson, options);
 
@@ -375,48 +377,9 @@ async function _sendRequestToChatAPI(messages, apiKey, chatModel, url, options) 
 
 // Ollama形式のchat API を呼び出す
 async function _ollamaChatCompletion(messages, apiKey, chatModel, url, options) {
-  //const apiKey = API_KEY;
-  //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
-
-  /*--
-  const bodyJson = {
-    messages: messages,
-    model: chatModel,
-  };
-  _mergeOptions(bodyJson, options);
-
-  const body = JSON.stringify(bodyJson);
-  const headers = _buildHeaders(apiKey, url);
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: headers,
-    body,
-  }).catch(e => {
-    console.error(e);
-    return {
-      role: 'error',
-      content: 'Network ERROR, Please try again.',
-    };
-  });
-  if (res?.role === 'error') {
-    return res;
-  }
-
-
-  // エラー判定
-  if (!res.ok) {
-    const responseText = await res.text();
-    _debugLog(res, responseText);
-    return {
-      role: 'error',
-      content: 'Server Error:' + res.status + '. ' + responseText,
-    };
-  }
-  ---*/
-
   // Chat APIにリクエストを送信する
-  const packedMessage = await _sendRequestToChatAPI(messages, apiKey, chatModel, url, options);
+  const streamFlag = false
+  const packedMessage = await _sendRequestToChatAPI(messages, apiKey, chatModel, url, streamFlag, options);
   if (packedMessage.role === 'error') {
     return packedMessage;
   }
@@ -462,42 +425,13 @@ function _buildMessageFromMultiLineString(text) {
 // chat API を呼び出し、ストリーミングで応答を返す
 // 参考: https://zenn.dev/himanushi/articles/99579cf407c30b
 async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHander, options) {
-  //const CHATAPI_URL = "https://api.openai.com/v1/chat/completions";
-
-  const bodyJson = {
-    messages: messages,
-    model: chatModel,
-    stream: true, // ここで stream を有効にする
-  };
-  _mergeOptions(bodyJson, options);
-
-  const body = JSON.stringify(bodyJson);
-  const headers = _buildHeaders(apiKey, url);
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: headers,
-    body,
-  }).catch(e => {
-    console.error(e);
-    return {
-      role: 'error',
-      content: 'Network ERROR, Please try again.',
-    };
-  });
-  if (res?.role === 'error') {
-    return res;
+  // -- Chat APIにリクエストを送信する --
+  const streamFlag = true;
+  const packedMessage = await _sendRequestToChatAPI(messages, apiKey, chatModel, url, streamFlag, options);
+  if (packedMessage.role === 'error') {
+    return packedMessage;
   }
-
-  // エラー判定
-  if (!res.ok) {
-    const responseText = await res.text();
-    _debugLog(res, responseText);
-    return {
-      role: 'error',
-      content: 'Server Error:' + res.status + '. ' + responseText,
-    };
-  }
+  const res = packedMessage.response;
 
   // ReadableStream として使用する
   const reader = res.body?.getReader();
