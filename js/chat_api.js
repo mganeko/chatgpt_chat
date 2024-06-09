@@ -161,10 +161,10 @@ async function streamChatText(text, ctx, chunkHander, options) {
   };
 
   // ==== check API mode ===
-  if (ctx.apiMode === 'ollama') {
-    _debugLog('streaming is not supported in ollama API mode.');
-    return { role: 'error', content: 'streaming is not supported in ollama API mode.' };
-  }
+  // if (ctx.apiMode === 'ollama') {
+  //   _debugLog('streaming is not supported in ollama API mode.');
+  //   return { role: 'error', content: 'streaming is not supported in ollama API mode.' };
+  // }
 
   // ==== 一時的メッセージ配列を作る ===
   const tempMessages = Array.from(ctx.chat_messages);
@@ -175,7 +175,17 @@ async function streamChatText(text, ctx, chunkHander, options) {
   _debugLog('after compaction tempMessages:', tempMessages);
 
   // -- request --
-  const response = await _chatCompletionStream(tempMessages, ctx.apiKey, ctx.model, ctx.url, chunkHander, options);
+  // const response = await _chatCompletionStream(tempMessages, ctx.apiKey, ctx.model, ctx.url, chunkHander, options);
+  // _debugLog(response);
+
+  // -- request --
+  let response;
+  if (ctx.apiMode === 'ollama') {
+    response = await _ollamaChatCompletionStream(tempMessages, ctx.apiKey, ctx.model, ctx.url, chunkHander, options);
+  }
+  else {
+    response = await _chatCompletionStream(tempMessages, ctx.apiKey, ctx.model, ctx.url, chunkHander, options);
+  }
   _debugLog(response);
 
   // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
@@ -420,6 +430,82 @@ function _buildMessageFromMultiLineString(text) {
     role: 'assistant',
     content: contentText,
   };
+}
+
+// Ollama形式のchat API を呼び出し、ストリーミングで応答を返す
+// 参考: https://zenn.dev/himanushi/articles/99579cf407c30b
+async function _ollamaChatCompletionStream(messages, apiKey, chatModel, url, chunkHander, options) {
+  // -- Chat APIにリクエストを送信する --
+  const streamFlag = true;
+  const packedMessage = await _sendRequestToChatAPI(messages, apiKey, chatModel, url, streamFlag, options);
+  if (packedMessage.role === 'error') {
+    return packedMessage;
+  }
+  const res = packedMessage.response;
+
+  // ReadableStream として使用する
+  const reader = res.body?.getReader();
+  if (!reader) {
+    _debugLog('ERROR to get streaming');
+    return {
+      role: 'error',
+      content: 'Server Error: No Streaming response',
+    };
+  }
+
+  let resultText = '';
+  const decoder = new TextDecoder('utf-8');
+  try {
+    // この read で再起的にメッセージを待機して取得します
+    const read = async () => {
+      const { done, value } = await reader.read();
+      if (done) return reader.releaseLock();
+
+      const chunk = decoder.decode(value, { stream: true });
+      _debugLog('chunk:', chunk);
+      const text = _handleSingleStreamString(chunk);
+      resultText += text;
+
+      if (chunkHander && typeof chunkHander === 'function') {
+        chunkHander(text);
+      }
+
+      return read();
+    };
+    await read();
+  } catch (e) {
+    console.error(e);
+    return { role: 'error', content: e.message };
+  }
+  finally {
+    // 例外が発生しても、最後は必ず解放する
+    console.log('finally releaseLock');
+    reader.releaseLock();
+  }
+
+  // 最終結果を返す
+  return { role: 'assistant', content: resultText };
+};
+
+// Ollama形式の、単一文字列からストリーミングテキストを抜き出す
+function _handleSingleStreamString(str) {
+  let tokenText = "";
+  if (str && str.length > 0) {
+    try {
+      const json = JSON.parse(str);
+      if (json?.message?.content) {
+        tokenText += json.message.content;
+      }
+    }
+    catch (err) {
+      _debugLog('string parse error:', err);
+    }
+  }
+  else {
+    _debugLog('error: empty string');
+  }
+
+  return tokenText;
 }
 
 // chat API を呼び出し、ストリーミングで応答を返す

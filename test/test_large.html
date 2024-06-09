@@ -300,16 +300,38 @@
         assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
       });
 
-      QUnit.test("ストリーミングはサポートしない。エラーが返る", async function (assert) {
+      // --- ストリーミングをサポートする --
+      // QUnit.test("ストリーミングはサポートしない。エラーが返る", async function (assert) {
+      //   let streamText = '';
+      //   function handleSteam(text) {
+      //     streamText += text;
+      //   }
+
+      //   const ctx = initChat("no-key-for-ollama", { url: TEST_OLLAMA_API_URL, apiMode: "ollama", model: TEST_OLLAMA_MDOEL_NAME });
+      //   const response = await streamChatText("富士山の高さを数字だけで答えて。カンマ無しで", ctx, handleSteam);
+      //   assert.strictEqual(response.role, 'error', "response is error");
+      //   assert.strictEqual(streamText, '', "text is empty");
+      // });
+
+      // ストリーミングでもメッセージの蓄積が増える
+      QUnit.test("Ollamaのストリーミングの蓄積と、最終の答えが一致する。メッセージが2個増える", async function (assert) {
         let streamText = '';
         function handleSteam(text) {
           streamText += text;
         }
 
         const ctx = initChat("no-key-for-ollama", { url: TEST_OLLAMA_API_URL, apiMode: "ollama", model: TEST_OLLAMA_MDOEL_NAME });
-        const response = await streamChatText("富士山の高さを数字だけで答えて。カンマ無しで", ctx, handleSteam);
-        assert.strictEqual(response.role, 'error', "response is error");
-        assert.strictEqual(streamText, '', "text is empty");
+        const len = ctx.chat_messages.length;
+        //const response = await streamChatText("富士山の高さを数字だけで答えて", ctx, handleSteam);
+        //const response = await streamChatText("日本で一番高い山は？", ctx, handleSteam);
+        const response = await streamChatText("Where is the capital of Japan?", ctx, handleSteam);
+        console.log("fujisan response:", response.content);
+        assert.strictEqual(response.role, 'assistant', "response is assistant");
+        assert.strictEqual(response.content, streamText, "stream summary and reponse.content is same");
+        //assert.ok(response.content.includes('3776') || response.content.includes('3,776'), "富士山は3776メートル");
+        //assert.ok(response.content.includes('富士山'), "日本で一番高い山は富士山");
+        assert.ok(response.content.includes('Tokyo') || response.content.includes('tokyo') || response.content.includes('東京'), "Capital of Japan is Tokyo");
+        assert.strictEqual(ctx.chat_messages.length, len + 2, "messages is changed");
       });
     }
     else {
@@ -317,6 +339,9 @@
         assert.ok(!TEST_CHECK_OLLAMA, "Ollama APIはスキップ");
       });
     }
+
+
+
   });
 
 </script>
