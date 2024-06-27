@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>test-s</title>
+  <link rel="icon" href="../img/chat.png" type="image/png">
+  <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.19.4.css">
+  <script src="../js/chat_builtin.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</head>
+
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+  <script src="https://code.jquery.com/qunit/qunit-2.19.4.js"></script>
+
+</body>
+<script>
+  QUnit.module("initBuiltinChat", function () {
+    QUnit.test("init builtin chat", async function (assert) {
+      const session = await initBuiltinChat();
+      assert.notEqual(session, null, "初期化成功");
+    });
+  });
+
+  QUnit.module("postChatText", function () {
+    QUnit.test("init builtin chat", async function (assert) {
+      const session = await initBuiltinChat();
+      assert.notEqual(session, null, "初期化成功");
+      const res = await postChatText("富士山の高さは？", session);
+      assert.notEqual(res, null, "応答が返ってきている");
+      assert.ok(res.includes('3776') || res.includes('3,776'), "富士山は3776メートル");
+    });
+  });
+
+</script>
+
+</html>
