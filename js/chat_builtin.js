@@ -22,7 +22,15 @@ const _debugMode = true; // true / false
 async function initBuiltinChat() {
    const session = await _initGeminiContext();
    _debugLog("session", session);
-   return session;
+   if (!session) {
+       return null;
+   }
+
+   const ctx = {
+       session: session,
+       chat_messages: [],
+   };
+   return ctx;
 }
 
 /*
@@ -37,11 +45,33 @@ async function initBuiltinChat() {
 * @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
 * @example postChatText('世界で一番高い山は？, ctx); // returns { role: 'assistant', content: 'エベレスト'}
 */
-async function postChatText(text, session) {
+async function postChatText(text, ctx) {
     _debugLog("before send promot:", text);
-    const res = await session.prompt(text);
-    _debugLog(res);
-    return res;
+
+    const systemMessage = "以下のやり取りに続いて回答してください。\n";
+    const userMessage = {
+        role: 'user',
+        content: text,
+    };
+    const prompt = systemMessage + 
+        _buildPromptFromChatMessages(ctx.chat_messages) + "\n" +
+        _buildPromptFromSingleMessage(userMessage);
+    _debugLog("built promot:", prompt);
+
+    const resText = await ctx.session.prompt(prompt);
+    _debugLog(resText);
+
+    // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
+    if (resText && resText !== '') {
+        const assistantMessage = {
+            role: 'robot',
+            content: resText,
+        };
+        ctx.chat_messages.push(userMessage);
+        ctx.chat_messages.push(assistantMessage);
+    }
+
+    return resText;
 }
 
 
@@ -50,14 +80,14 @@ async function postChatText(text, session) {
 // デバッグ用のログ出力
 function _debugLog(...args) {
     if (_debugMode) {
-      //console.log(...args);
+        //console.log(...args);
   
-      // 呼び出し元の情報を併せて出力する
-      //const line = Error().stack.split('\n')[2]; //.split(':')[1];
-      const stack = Error().stack.split('\n');
-      const line = stack[2] ?? stack[1] ?? stack[0];
+        // 呼び出し元の情報を併せて出力する
+        //const line = Error().stack.split('\n')[2]; //.split(':')[1];
+        const stack = Error().stack.split('\n');
+        const line = stack[2] ?? stack[1] ?? stack[0];
   
-      console.log(line, ': ', ...args);
+        console.log(line, ': ', ...args);
     }
   }
   
@@ -78,3 +108,16 @@ async function _initGeminiContext() {
     return null;
 }
 
+// 履歴からプロンプトを組み立てる
+function _buildPromptFromChatMessages(chatMessages) {
+    const prompt = chatMessages.map((msg) => {
+        //return `${msg.role}: ${msg.content}`;
+        return _buildPromptFromSingleMessage(msg);
+    }).join('\n');
+    return prompt;
+}
+
+// メッセージからプロンプトを1行組み立てる
+function _buildPromptFromSingleMessage(message) {
+    return `${message.role}: ${message.content}`;
+}

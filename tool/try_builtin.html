@@ -40,6 +40,22 @@
       background-color: #f0f0f0;
     }
   </style>
+  <!---
+  TODO:
+  - [x] 履歴を管理する
+    - [x] contextを再導入する
+    - [x] ユーザーの入力を覚える
+    - [x] AIの応答を覚える
+    - [x] これまでの履歴を含めて、プロンプトとして利用する
+      以下のやり取りに続いて回答してください。
+      user: 空が青い理由は？
+      robot: 空が青いのは光の散乱によって起こる現象です。白光のうち、光の波長の短い青い光が他の色光の波長の光のより多くを散乱させるためです。この散乱によって、空が私たちに見えやすくなります。
+      user: 海は？
+  - [ ] 履歴のサイズを制限する
+  - [ ] 履歴をクリアする
+
+    
+  -->
 </head>
 
 <body>
@@ -72,7 +88,7 @@
 </body>
 <script>
   // ==== global context ===
-  let chatSession = null;
+  let chatCtx = null;
 
   // ==== UI elements ====
   const divChatHistory = document.getElementById('chat_history');
@@ -104,7 +120,7 @@
       }
       else {
         // 通常モード
-        const responseText = await postChatText(text, chatSession);
+        const responseText = await postChatText(text, chatCtx);
         addResponseText(responseText);
       }
     }
@@ -222,7 +238,7 @@
   async function initSession() {
     // --- init context ---
     const options = buildInitOptions();
-    chatSession = await initBuiltinChat(); // Chatを初期化し、Sessionを保持する
+    chatCtx = await initBuiltinChat(); // Chatを初期化し、Sessionを保持する
 
     // --- setup UI ---
     setupUI(options);
