@@ -40,10 +40,9 @@ async function initBuiltinChat() {
 * チャットメッセージを送信し、応答を返す。履歴は扱わない
 * @description やりとりの履歴は扱わない
 * @param {string} text - ユーザーからのテキスト
-* @param {object} ctx - GPTコンテキスト
-* @param {object} options - オプション(null可)。{ temperature: xxx } のみ有効
-* @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
-* @example siggleChat('世界で一番高い山は？, ctx); // returns { role: 'assistant', content: 'エベレスト'}
+* @param {object} ctx - Chatコンテキスト
+* @returns {string} 応答 - 
+* @example singleChat('世界で一番高い山は？, ctx); // returns "エベレストです"
 */
 async function singleChat(text, ctx) {
     _debugLog("before send promot:", text);
@@ -91,6 +90,20 @@ async function postChatText(text, ctx) {
     }
 
     return resText;
+}
+
+/*
+ * チャットの履歴をクリアーする
+ */
+/**
+* チャット履歴をクリアーする
+* @description ctx.chat_messages をクリアーする
+* @param {object} ctx - Chatコンテキスト
+* @returns {void} 応答 - なし 
+* @example siggleChat('世界で一番高い山は？, ctx); // returns "エベレストです"
+*/
+function clearChatHistory(ctx) {
+    ctx.chat_messages = [];
 }
 
 // ============= helper function ============

@@ -92,6 +92,23 @@
     });
   });
 
+  QUnit.module("clearChatHistory", function () {
+    QUnit.test("clear chat history", async function (assert) {
+      const ctx = await initBuiltinChat();
+      assert.notEqual(ctx, null, "初期化成功");
+      const countBefore = ctx.chat_messages.length;
+      const res = await postChatText("富士山の高さは？", ctx);
+      assert.notEqual(res, null, "応答が返ってきている");
+      assert.ok(res.includes('3776') || res.includes('3,776'), "富士山は3776メートル");
+      const countAfter = ctx.chat_messages.length;
+      assert.equal(countAfter, countBefore + 2, "チャットメッセージが2つ追加されている");
+
+      clearChatHistory(ctx);
+      const countAfterClear = ctx.chat_messages.length;
+      assert.equal(countAfterClear, 0, "チャットメッセージがクリアされている");
+    });
+  });
+
 </script>
 
 </html>
