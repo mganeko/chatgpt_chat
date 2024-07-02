@@ -50,6 +50,32 @@ async function singleChat(text, ctx) {
 }
 
 /*
+ * シンプルな単一チャット、ストリーミングバージョン
+ */
+/**
+* チャットメッセージを送信し、応答を返す。履歴は扱わない
+* @description やりとりの履歴は扱わない
+* @param {string} text - ユーザーからのテキスト
+* @param {object} ctx - Chatコンテキスト
+* @param {function} chunkHander - ストリーミングでトークンを処理するハンドラ
+* @returns {string} 応答 - 生成されたテキスト
+* @example singleChatStream('世界で一番高い山は？, ctx); // returns "エベレストです"
+*/
+async function singleChatStream(text, ctx, chunkHander) {
+    _debugLog("before send promot:", text);
+    const stream = await ctx.session.promptStreaming(text);
+    let resText = '';
+    for await (const chunk of stream) {
+        _debugLog(chunk);
+        chunkHander(chunk);
+        resText += chunk;
+    }
+
+    return resText;
+}
+
+
+/*
  * チャットメッセージを送信する
  */
 /**
@@ -74,6 +100,54 @@ async function postChatText(text, ctx) {
     _debugLog("built promot:", prompt);
 
     const resText = await ctx.session.prompt(prompt);
+    _debugLog(resText);
+
+    // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
+    if (resText && resText !== '') {
+        const assistantMessage = {
+            role: 'robot',
+            content: resText,
+        };
+        ctx.chat_messages.push(userMessage);
+        ctx.chat_messages.push(assistantMessage);
+    }
+
+    return resText;
+}
+
+
+/*
+ * チャットメッセージを送信し、ストリーミングで応答を返す
+ */
+/**
+* チャットメッセージを送信し、ストリーミングで応答を返す
+* @description ctx.chat_messages に配列としてやりとりが蓄積される
+* @param {string} text - ユーザーからのテキスト
+* @param {object} ctx - chatコンテキスト
+* @param {function} chunkHander - ストリーミングでトークンを処理するハンドラ
+* @returns {string} 応答 - 生成されたテキスト
+* @example postChatText('世界で一番高い山は？, ctx); // returns 'エベレスト'
+*/
+async function streamChatText(text, ctx, chunkHander) {
+    _debugLog("before send promot:", text);
+
+    const systemMessage = "以下のやり取りに続いて回答してください。\n";
+    const userMessage = {
+        role: 'user',
+        content: text,
+    };
+    const prompt = systemMessage + 
+        _buildPromptFromChatMessages(ctx.chat_messages) + "\n" +
+        _buildPromptFromSingleMessage(userMessage);
+    _debugLog("built promot:", prompt);
+
+    const stream = await ctx.session.promptStreaming(text);
+    let resText = '';
+    for await (const chunk of stream) {
+        _debugLog(chunk);
+        chunkHander(chunk);
+        resText += chunk;
+    }
     _debugLog(resText);
 
     // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
@@ -149,3 +223,17 @@ function _buildPromptFromChatMessages(chatMessages) {
 function _buildPromptFromSingleMessage(message) {
     return `${message.role}: ${message.content}`;
 }
+
+
+/* ---- memo --
+
+from:
+  https://azukiazusa.dev/blog/try-chrome-internal-ai-gemini-nano/
+
+AITextSession オブジェクトのインターフェース
+prompt(text: string): Promise<string>：プロンプトを渡し、AI による回答を取得する
+promptStreaming(text: string): AsyncIterable<string>：結果全体を待つのではなく、ストリーミング形式で結果を取得する
+execute(text: string): Promise<string>：prompt と同じ
+executeStreaming(text: string): AsyncIterable<string>：promptStreaming と同じ
+destroy(): void：セッションを破棄する？
+---*/
