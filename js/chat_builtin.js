@@ -12,12 +12,10 @@ const _debugMode = true; // true / false
  * Chatを初期化する
  */
 /**
-* Chatを初期化し、chatセッションを返す
-* @description Chatを初期化、GPTコンテキストを返す
-* @param {string} apiKey - OpenAI APIのキー
-* @param {object} options - オプション, nullもOK. 例) { model: 'gpt-3.5-turbo', url: 'https://api.openai.com/v1/chat/completions', systemMessage: "Reply in English.", sendTokenLimit: 3900, apiMode: "ollama" } // apiMode: "openai"(default) | "ollama"
-* @returns {object} GPTコンテキスト
-* @example initChat('xxxxxxxxxx', { model: 'xxxxx'}); // returns gptContext
+* Chatを初期化し、chatコンテキストを返す
+* @description Chatを初期化、コンテキストを返す
+* @returns {object} chatコンテキスト
+* @example initBuiltinChat(); // returns chatContext
 */
 async function initBuiltinChat() {
    const session = await _initGeminiContext();
@@ -41,7 +39,7 @@ async function initBuiltinChat() {
 * @description やりとりの履歴は扱わない
 * @param {string} text - ユーザーからのテキスト
 * @param {object} ctx - Chatコンテキスト
-* @returns {string} 応答 - 
+* @returns {string} 応答 - 生成されたテキスト
 * @example singleChat('世界で一番高い山は？, ctx); // returns "エベレストです"
 */
 async function singleChat(text, ctx) {
@@ -58,10 +56,9 @@ async function singleChat(text, ctx) {
 * チャットメッセージを送信し、応答を返す
 * @description ctx.chat_messages に配列としてやりとりが蓄積される
 * @param {string} text - ユーザーからのテキスト
-* @param {object} ctx - GPTコンテキスト
-* @param {object} options - オプション(null可)。{ temperature: xxx } のみ有効
-* @returns {object} 応答 - { role: 'assistant' / 'error', content: 生成されたテキスト }
-* @example postChatText('世界で一番高い山は？, ctx); // returns { role: 'assistant', content: 'エベレスト'}
+* @param {object} ctx - chatコンテキスト
+* @returns {string} 応答 - 生成されたテキスト
+* @example postChatText('世界で一番高い山は？, ctx); // returns 'エベレスト'
 */
 async function postChatText(text, ctx) {
     _debugLog("before send promot:", text);
