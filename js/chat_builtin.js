@@ -146,7 +146,7 @@ async function streamChatText(text, ctx, chunkHander) {
     for await (const chunk of stream) {
         _debugLog(chunk);
         chunkHander(chunk);
-        resText += chunk;
+        resText = chunk;
     }
     _debugLog(resText);
 

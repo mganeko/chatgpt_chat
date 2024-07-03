@@ -52,8 +52,8 @@
       robot: 空が青いのは光の散乱によって起こる現象です。白光のうち、光の波長の短い青い光が他の色光の波長の光のより多くを散乱させるためです。この散乱によって、空が私たちに見えやすくなります。
       user: 海は？
   - [ ] 履歴のサイズを制限する
-  - [ ] 履歴をクリアする
-  - [ ] ストリーミング応答を試す
+  - [x] 履歴をクリアする
+  - [x] ストリーミング応答を試す
 
     
   -->
@@ -110,14 +110,12 @@
     showWaiting(true);
     try {
       if (useStreamCheck.checked) {
-        debugger; // not implemented
-
         // ストリームモードを利用
-        const response = await streamChatText(text, gptCtx, (x) => {
+        const responseText = await streamChatText(text, chatCtx, (x) => {
           //console.log('stream:', x);
-          divWaitStreaming.innerHTML += x;
-        }, options);
-        addResponseText(response.content);
+          divWaitStreaming.innerHTML = x;
+        });
+        addResponseText(responseText);
       }
       else {
         // 通常モード
@@ -228,7 +226,8 @@
 
   function setupUI(options) {
     //if (options?.apiMode === 'ollama') {
-    const useStream = false;
+    //const useStream = false;
+    const useStream = true;
     if (!useStream) {
       //ストリーム応答は利用しない
       useStreamCheck.checked = false;
