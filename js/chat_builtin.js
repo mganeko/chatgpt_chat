@@ -224,6 +224,53 @@ function _buildPromptFromSingleMessage(message) {
     return `${message.role}: ${message.content}`;
 }
 
+// 過去のやり取りを制限に収まるように圧縮する
+function _messageCompaction(messages, tokenLimit) {
+    let size = _calcTokenSize(messages);
+    _debugLog("total token sise:", size);
+    while (size > tokenLimit) {
+      _debugLog("Message Token total Size %d, over Limit %d", size, tokenLimit);
+      _removeMessage(messages, tokenLimit);
+      size = _calcTokenSize(messages)
+    }
+  }
+  
+  // 過去のメッセージを取り除く
+  function _removeMessage(messages, tokenLimit) {
+    if (messages.length === 0) {
+      // メッセージがない場合は、何もしない
+      return;
+    }
+    else if (messages.length === 1) {
+      // メッセージが1つの場合は、それを短くする
+      const lastMessage = messages[0];
+      _shortenMessage(lastMessage, tokenLimit);
+      _debugLog('shorten last message:', lastMessage);
+      return;
+    }
+  
+    // ==== メッセージが2つ以上の場合 ===
+    // systemロールをスキップ
+    let removeIndex = 0;
+    let tokenLimitWithSystem = tokenLimit;
+    const firstMessage = messages[0];
+    if (firstMessage.role === 'system') {
+      removeIndex = 1;
+      tokenLimitWithSystem = tokenLimit - _calcSingleMessageToken(firstMessage);
+    }
+  
+    // --- 最後のメッセージの場合は短くする ---
+    if (removeIndex === messages.length - 1) {
+      const lastMessage = messages[removeIndex];
+      _shortenMessage(lastMessage, tokenLimitWithSystem);
+      _debugLog('shorten last message:', lastMessage);
+    }
+    else {
+      // --- 最後でなければ、除去する ---
+      const removedMessage = messages.splice(removeIndex, 1);
+      _debugLog('remove message:', removedMessage);
+    }
+  }
 
 
 // 過去のメッセージ全体のトークンサイズを計算する（文字数による近似）
@@ -240,7 +287,14 @@ function _calcSingleMessageToken(message) {
     // "role: content\n"
     return message.role.length + 2 + message.content.length + 1;
 }
-  
+
+// メッセージ単体を短くする（文字数による近似）
+function _shortenMessage(message, tokenLimit) {
+    const adjustedLimit = tokenLimit - (message.role.length + 2 + 1);
+    const content = message.content;
+    message.content = content.substring(0, adjustedLimit);
+}
+
 /* ---- memo --
 
 from:
