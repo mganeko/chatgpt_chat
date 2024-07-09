@@ -18,7 +18,19 @@
 
 </body>
 <script>
-    QUnit.module("_buildPromptFromSingleMessage", function () {
+
+  QUnit.module("_calcTokenSize", function () {
+    QUnit.test("3つのメッセージの合計トークンサイズ", function (assert) {
+      const message0 = { role: 'system', content: 'abcdeアイウエオかきくけこ' };
+      const mesaage1 = { role: 'user', content: '1234567890' };
+      const mesaage2 = { role: 'assistant', content: 'アシスタントの答え' };
+      const messages = [message0, mesaage1, mesaage2];
+      assert.strictEqual(_calcTokenSize(messages), (6+2+15+1) + (4+2+10+1) + (9+2+9+1), "token size === 62");
+    });
+  });
+
+
+  QUnit.module("_buildPromptFromSingleMessage", function () {
     QUnit.test("build prompot from single message", function (assert) {
       const message = { role: "user", content: "富士山の高さは？" };
       const expected = "user: 富士山の高さは？";
@@ -133,7 +145,8 @@
     QUnit.test("stream chat and keep message history", async function (assert) {
       let streamText = '';
       function handleSteam(text) {
-        streamText += text;
+        //streamText += text;
+        streamText = text;
       }
 
       const ctx = await initBuiltinChat();

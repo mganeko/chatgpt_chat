@@ -225,6 +225,22 @@ function _buildPromptFromSingleMessage(message) {
 }
 
 
+
+// 過去のメッセージ全体のトークンサイズを計算する（文字数による近似）
+function _calcTokenSize(messages) {
+    let totalSize = 0;
+    messages.forEach(message => {
+      totalSize += _calcSingleMessageToken(message);
+    });
+    return totalSize;
+}
+  
+// メッセージ単体のトークンサイズを計算する（文字数による近似）
+function _calcSingleMessageToken(message) {
+    // "role: content\n"
+    return message.role.length + 2 + message.content.length + 1;
+}
+  
 /* ---- memo --
 
 from:
