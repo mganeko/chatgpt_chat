@@ -6,6 +6,9 @@
 const _debugMode = true; // true / false
 //const _debugMode = false; // true / false
 
+const _TOKEN_LIMIT = 2000;
+const _PROMPOT_TOKEN_LIMIT = _TOKEN_LIMIT - 1000;
+
 // ============== public function ==============
 
 /*
@@ -94,6 +97,45 @@ async function postChatText(text, ctx) {
         role: 'user',
         content: text,
     };
+
+    // ==== 一時的メッセージ配列を作る ===
+    const tempMessages = Array.from(ctx.chat_messages);
+    tempMessages.push(userMessage);
+
+    // -- compaction --
+    _messageCompaction(tempMessages, _PROMPOT_TOKEN_LIMIT);
+    _debugLog('after compaction tempMessages:', tempMessages);
+
+    // --- プロンプトを組み立てる ---
+    const prompt = systemMessage + 
+        _buildPromptFromChatMessages(tempMessages) + "\n" +
+        _buildPromptFromSingleMessage(userMessage);
+    _debugLog("built promot:", prompt);
+
+    const resText = await ctx.session.prompt(prompt);
+    _debugLog(resText);
+
+    // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
+    if (resText && resText !== '') {
+        const assistantMessage = {
+            role: 'robot',
+            content: resText,
+        };
+        tempMessages.push(assistantMessage);
+        ctx.chat_messages = tempMessages;
+    }
+
+    return resText;
+}
+
+async function postChatText_bak(text, ctx) {
+    _debugLog("before send promot:", text);
+
+    const systemMessage = "以下のやり取りに続いて回答してください。\n";
+    const userMessage = {
+        role: 'user',
+        content: text,
+    };
     const prompt = systemMessage + 
         _buildPromptFromChatMessages(ctx.chat_messages) + "\n" +
         _buildPromptFromSingleMessage(userMessage);
@@ -115,7 +157,6 @@ async function postChatText(text, ctx) {
     return resText;
 }
 
-
 /*
  * チャットメッセージを送信し、ストリーミングで応答を返す
  */
@@ -129,6 +170,51 @@ async function postChatText(text, ctx) {
 * @example postChatText('世界で一番高い山は？, ctx); // returns 'エベレスト'
 */
 async function streamChatText(text, ctx, chunkHander) {
+    _debugLog("before send promot:", text);
+
+    const systemMessage = "以下のやり取りに続いて回答してください。\n";
+    const userMessage = {
+        role: 'user',
+        content: text,
+    };
+
+    // ==== 一時的メッセージ配列を作る ===
+    const tempMessages = Array.from(ctx.chat_messages);
+    tempMessages.push(userMessage);
+
+    // -- compaction --
+    _messageCompaction(tempMessages, _PROMPOT_TOKEN_LIMIT);
+    _debugLog('after compaction tempMessages:', tempMessages);
+
+    // --- プロンプトを組み立てる ---
+    const prompt = systemMessage + 
+        _buildPromptFromChatMessages(tempMessages) + "\n" +
+        _buildPromptFromSingleMessage(userMessage);
+    _debugLog("built promot:", prompt);
+
+    const stream = await ctx.session.promptStreaming(prompt);
+    let resText = '';
+    for await (const chunk of stream) {
+        _debugLog(chunk);
+        chunkHander(chunk);
+        resText = chunk;
+    }
+    _debugLog(resText);
+
+    // --- 結果が正常な場合に、userメッセージと合わせて保持する  --
+    if (resText && resText !== '') {
+        const assistantMessage = {
+            role: 'robot',
+            content: resText,
+        };
+        tempMessages.push(assistantMessage);
+        ctx.chat_messages = tempMessages;
+    }
+
+    return resText;
+}
+
+async function streamChatText_bak(text, ctx, chunkHander) {
     _debugLog("before send promot:", text);
 
     const systemMessage = "以下のやり取りに続いて回答してください。\n";
