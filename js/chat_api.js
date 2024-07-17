@@ -216,6 +216,35 @@ function _debugLog(...args) {
   }
 }
 
+// デバッグ用のエラーログ出力
+function _debugError(...args) {
+  if (_debugMode) {
+    //console.log(...args);
+    const STYLE = 'color:white; background-color:red; padding:2px 2px; border-radius:2px;'
+
+    // 呼び出し元の情報を併せて出力する
+    const stack = Error().stack.split('\n');
+    const line = stack[2] ?? stack[1] ?? stack[0];
+
+    console.log('%cERROR', STYLE, line, ': ', ...args);
+  }
+}
+
+// デバッグ用のワーニングログ出力
+function _debugWarn(...args) {
+  if (_debugMode) {
+    //console.log(...args);
+    const STYLE = 'color:white; background-color:#FFCC33; padding:2px 2px; border-radius:2px;'
+
+    // 呼び出し元の情報を併せて出力する
+    const stack = Error().stack.split('\n');
+    const line = stack[2] ?? stack[1] ?? stack[0];
+
+    console.log('%cWARN', STYLE, line, ': ', ...args);
+  }
+}
+
+
 // ============= inner function ============
 
 // GPTコンテキストを初期化する
@@ -367,7 +396,7 @@ async function _sendRequestToChatAPI(messages, apiKey, chatModel, url, streamFla
   if (res?.role === 'error') {
     return res;
   }
-  
+
   // エラー判定
   if (!res.ok) {
     const responseText = await res.text();
@@ -420,7 +449,7 @@ function _buildMessageFromMultiLineString(text) {
         }
       }
       catch (err) {
-        _debugLog('line parse error:', err);
+        _debugError('line parse error:', err);
       }
     }
   };
@@ -446,7 +475,7 @@ async function _ollamaChatCompletionStream(messages, apiKey, chatModel, url, chu
   // ReadableStream として使用する
   const reader = res.body?.getReader();
   if (!reader) {
-    _debugLog('ERROR to get streaming');
+    _debugError('ERROR to get streaming');
     return {
       role: 'error',
       content: 'Server Error: No Streaming response',
@@ -498,11 +527,11 @@ function _handleSingleStreamString(str) {
       }
     }
     catch (err) {
-      _debugLog('string parse error:', err);
+      _debugError('string parse error:', err);
     }
   }
   else {
-    _debugLog('error: empty string');
+    _debugError('error: empty string');
   }
 
   return tokenText;
@@ -522,7 +551,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
   // ReadableStream として使用する
   const reader = res.body?.getReader();
   if (!reader) {
-    _debugLog('ERROR to get streaming');
+    _debugError('ERROR to get streaming');
     return {
       role: 'error',
       content: 'Server Error: No Streaming response',
@@ -530,6 +559,7 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
   }
 
   let resultText = '';
+  let holdText = ''; // 中途半端なテキストを保持する
   const decoder = new TextDecoder('utf-8');
   try {
     // この read で再起的にメッセージを待機して取得します
@@ -537,12 +567,14 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
       const { done, value } = await reader.read();
       if (done) return reader.releaseLock();
 
-      const chunk = decoder.decode(value, { stream: true });
+      // 前回の中途半端なテキストが残っていたら、それも含めて処理する
+      const chunk = holdText + decoder.decode(value, { stream: true });
+      holdText = ''; // 一旦クリア
       // この chunk には以下のようなデータ格納されている。複数格納されることもある。
       // data: { ... }
       // これは Event stream format と呼ばれる形式
       // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format
-      //console.log(chunk);
+      //_debugLog(chunk);
 
       // ====※Ollamaの場合、chuckに複数行のテキスト（JSON）が格納されているため、それを解析する====
       // TODO: この部分を適切に解析して、最終的な結果を取得する
@@ -563,13 +595,21 @@ async function _chatCompletionStream(messages, apiKey, chatModel, url, chunkHand
             //_debugLog('[DONE] chunk data');
             return '';
           }
+          // trimDataが'}'で終わっていない場合は、中途半端なテキスト
+          if (trimData[trimData.length - 1] !== '}') {
+            holdText = trimData;
+            _debugWarn('NOT complete chunk. holdText:', holdText);
+            return '';
+          }
+
+          // --- parse JSON --- 
           try {
-            jsonData = JSON.parse(data.trim());
+            jsonData = JSON.parse(trimData);
             return jsonData;
           }
           catch (e) {
-            _debugLog('=== JSON parse ERROR:', e);
-            _debugLog('=== chunk data:', data);
+            _debugError('=== JSON parse ERROR:', e);
+            _debugError('=== chunk data:', data);
             return '';
           }
         })
