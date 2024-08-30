@@ -71,7 +71,8 @@ async function singleChatStream(text, ctx, chunkHander) {
     for await (const chunk of stream) {
         _debugLog(chunk);
         chunkHander(chunk);
-        resText += chunk;
+        //resText += chunk;
+        resText = chunk;
     }
 
     return resText;
